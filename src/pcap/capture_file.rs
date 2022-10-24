@@ -3,7 +3,7 @@ use std::fs::File;
 use std::io::{Read, Write};
 use std::path::Path;
 
-use crate::error::DummyError;
+use crate::pcap::error::DummyError;
 
 #[derive(Debug)]
 pub enum CaptureFile {

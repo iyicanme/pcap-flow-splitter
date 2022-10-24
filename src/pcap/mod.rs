@@ -1,5 +1,3 @@
-#![warn(missing_docs)]
-
 //! # pcap
 //!
 //! Provides a simple interface to read and write packet capture (pcap) files packet-by-packet
@@ -52,10 +50,10 @@
 use std::error::Error;
 use std::path::Path;
 
-use crate::capture_file::CaptureFile;
-use crate::capture_header::CaptureHeader;
 use crate::packet::Packet;
-use crate::packet_header::PacketHeader;
+use crate::pcap::capture_file::CaptureFile;
+use crate::pcap::capture_header::CaptureHeader;
+use crate::pcap::packet_header::PacketHeader;
 
 mod capture_file;
 
@@ -63,9 +61,6 @@ mod capture_file;
 pub mod capture_header;
 mod endian_aware_buffer;
 mod error;
-
-/// Contains definitions of packet
-pub mod packet;
 
 /// Contains definition of endianness relation
 pub mod endianness;

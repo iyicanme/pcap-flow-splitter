@@ -1,6 +1,6 @@
 [package]
-name = "pcap"
-description = "A crate to read and write packet capture (pcap) files"
+name = "pcap_flow_splitter"
+description = "A CLI utility that splits pcap files by flows"
 version = "0.1.0"
 edition = "2021"
 

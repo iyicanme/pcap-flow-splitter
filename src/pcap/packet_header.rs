@@ -1,8 +1,9 @@
 use std::fmt::{Display, Formatter};
 
-use crate::capture_header::TimestampPrecision;
-use crate::endian_aware_buffer::{EndianAwareWriteOnlyCursor, EndiannessAwareReadOnlyCursor};
-use crate::endianness::Endianness;
+use crate::endianness_aware_cursor::{
+    Endianness, ReadOnlyEndiannessAwareCursor, WriteOnlyEndiannessAwareCursor,
+};
+use crate::pcap::capture_header::TimestampPrecision;
 
 /// Represents the header of a packet in the capture.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
@@ -24,7 +25,7 @@ impl PacketHeader {
         endianness: Endianness,
         timestamp_precision: TimestampPrecision,
     ) -> Self {
-        let mut cursor = EndiannessAwareReadOnlyCursor::new(buffer, endianness);
+        let mut cursor = ReadOnlyEndiannessAwareCursor::new(buffer, endianness);
 
         let timestamp = Timestamp(timestamp_precision, cursor.get_u32(), cursor.get_u32());
         let captured_length = PacketLength(cursor.get_u32());
@@ -39,7 +40,7 @@ impl PacketHeader {
 
     /// Takes a `PacketHeader` and returns the corresponding binary representation
     pub fn compose(&self, endianness: Endianness) -> Vec<u8> {
-        let mut cursor = EndianAwareWriteOnlyCursor::new(endianness);
+        let mut cursor = WriteOnlyEndiannessAwareCursor::new(endianness);
 
         cursor.put_u32(self.timestamp.1);
         cursor.put_u32(self.timestamp.2);

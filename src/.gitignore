@@ -3,3 +3,18 @@
 !.gitignore
 
 !*.rs
+
+!endianness_aware_cursor
+!endianness_aware_cursor/**
+
+!link_layer_type
+!link_layer_type/**
+
+!packet
+!packet/**
+
+!packet_dissection
+!packet_dissection/**
+
+!pcap
+!pcap/**

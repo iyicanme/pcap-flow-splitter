@@ -1,13 +1,13 @@
+use std::fmt::{Display, Formatter};
+
 use bytes::{Buf, BufMut};
 
-use crate::endianness::Endianness;
-
-pub struct EndiannessAwareReadOnlyCursor<'a> {
+pub struct ReadOnlyEndiannessAwareCursor<'a> {
     buffer: &'a [u8],
     endianness: Endianness,
 }
 
-impl<'a> EndiannessAwareReadOnlyCursor<'a> {
+impl<'a> ReadOnlyEndiannessAwareCursor<'a> {
     pub fn new(buffer: &'a [u8], endianness: Endianness) -> Self {
         Self { buffer, endianness }
     }
@@ -35,12 +35,12 @@ impl<'a> EndiannessAwareReadOnlyCursor<'a> {
     }
 }
 
-pub struct EndianAwareWriteOnlyCursor {
+pub struct WriteOnlyEndiannessAwareCursor {
     buffer: Vec<u8>,
     endianness: Endianness,
 }
 
-impl EndianAwareWriteOnlyCursor {
+impl WriteOnlyEndiannessAwareCursor {
     pub fn new(endianness: Endianness) -> Self {
         Self {
             buffer: Vec::new(),
@@ -70,5 +70,27 @@ impl EndianAwareWriteOnlyCursor {
             Endianness::Identical => self.buffer.put_u32_le(value),
             Endianness::Swapped => self.buffer.put_u32(value),
         }
+    }
+}
+
+/// Represents endianness relation between the capture file and the current machine
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub enum Endianness {
+    /// Capture has the same endianness with the current machine
+    Identical,
+    /// Capture has the inverse of the endianness of the current machine
+    Swapped,
+}
+
+impl Display for Endianness {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Endianness::Identical => "identical",
+                Endianness::Swapped => "swapped",
+            }
+        )
     }
 }

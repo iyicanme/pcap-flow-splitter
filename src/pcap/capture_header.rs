@@ -2,9 +2,11 @@ use std::error::Error;
 use std::fmt::{Display, Formatter};
 use std::ops::{BitAnd, Shl};
 
-use crate::endian_aware_buffer::{EndianAwareWriteOnlyCursor, EndiannessAwareReadOnlyCursor};
-use crate::endianness::Endianness;
-use crate::error::DummyError;
+use crate::endianness_aware_cursor::{
+    Endianness, ReadOnlyEndiannessAwareCursor, WriteOnlyEndiannessAwareCursor,
+};
+use crate::link_layer_type::LinkLayerType;
+use crate::pcap::error::DummyError;
 
 /// Represents a capture header
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
@@ -41,7 +43,7 @@ impl CaptureHeader {
     /// # Errors
     /// Can fail if magic number is invalid or link layer type is not recognized
     pub fn parse(buffer: &[u8]) -> Result<Self, Box<dyn Error>> {
-        let mut cursor = EndiannessAwareReadOnlyCursor::new(buffer, Endianness::Identical);
+        let mut cursor = ReadOnlyEndiannessAwareCursor::new(buffer, Endianness::Identical);
 
         let (endianness, timestamp_precision) = match cursor.get_u32() {
             CaptureHeader::MAGIC_NUMBER_IDENTICAL_MICRO => {
@@ -103,7 +105,7 @@ impl CaptureHeader {
 
     /// Takes a `CaptureHeader` and returns the corresponding binary representation
     pub fn compose(&self) -> Vec<u8> {
-        let mut cursor = EndianAwareWriteOnlyCursor::new(self.endianness);
+        let mut cursor = WriteOnlyEndiannessAwareCursor::new(self.endianness);
 
         match self.timestamp_precision {
             TimestampPrecision::Micro => {
@@ -192,25 +194,6 @@ pub struct FrameCyclicSequence(pub u8);
 impl Display for FrameCyclicSequence {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
-    }
-}
-
-/// Represents link layer type of packets in the capture.
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub enum LinkLayerType {
-    /// IEEE 802.3 Ethernet
-    En10Mb,
-}
-
-impl Display for LinkLayerType {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                LinkLayerType::En10Mb => "Ethernet",
-            }
-        )
     }
 }
 
