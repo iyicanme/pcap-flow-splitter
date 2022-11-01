@@ -5,24 +5,16 @@ use std::ops::{BitAnd, Shl};
 use crate::endianness_aware_cursor::{
     Endianness, ReadOnlyEndiannessAwareCursor, WriteOnlyEndiannessAwareCursor,
 };
-use crate::link_layer_type::LinkLayerType;
+use crate::packet_layer::LinkLayerType;
 use crate::pcap::error::DummyError;
 
-/// Represents a capture header
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct CaptureHeader {
-    /// Endianness of the capture file, inferred from magic number
     pub endianness: Endianness,
-    /// Precision of timestamps in capture file, inferred from magic number
     pub timestamp_precision: TimestampPrecision,
-    /// Version of PCAP specification the capture follows
     pub version: Version,
-    /// Maximum length packets are captured up to. If a packet is longer, it is truncated and
-    /// it's capture-actual length values are different.
     pub maximum_packet_length: MaximumPacketLength,
-    /// If present, amount of bytes provided are appended after each packet
     pub frame_cyclic_sequence: Option<FrameCyclicSequence>,
-    /// Link layer of packets in the capture
     pub link_layer_type: LinkLayerType,
 }
 
@@ -38,10 +30,6 @@ impl CaptureHeader {
     const FRAME_CYCLIC_SEQUENCE_FLAG_MASK: u32 = 0x10_00_00_00;
     const FRAME_CYCLIC_SEQUENCE_MASK: u32 = 0xE0_00_00_00;
 
-    /// Takes a buffer that contains a capture header and returns a parsed `CaptureHeader`
-    ///
-    /// # Errors
-    /// Can fail if magic number is invalid or link layer type is not recognized
     pub fn parse(buffer: &[u8]) -> Result<Self, Box<dyn Error>> {
         let mut cursor = ReadOnlyEndiannessAwareCursor::new(buffer, Endianness::Identical);
 
@@ -103,7 +91,6 @@ impl CaptureHeader {
         Ok(capture_header)
     }
 
-    /// Takes a `CaptureHeader` and returns the corresponding binary representation
     pub fn compose(&self) -> Vec<u8> {
         let mut cursor = WriteOnlyEndiannessAwareCursor::new(self.endianness);
 
@@ -145,12 +132,9 @@ impl Display for CaptureHeader {
     }
 }
 
-/// Representation of timestamp precision of packets in the capture
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum TimestampPrecision {
-    /// Microsecond precision
     Micro,
-    /// Nanosecond precision
     Nano,
 }
 
@@ -167,7 +151,6 @@ impl Display for TimestampPrecision {
     }
 }
 
-/// Version of PCAP specification the capture follows
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct Version(pub u16, pub u16);
 
@@ -177,7 +160,6 @@ impl Display for Version {
     }
 }
 
-/// Maximum length packets are captured up to.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct MaximumPacketLength(pub u32);
 
@@ -187,7 +169,6 @@ impl Display for MaximumPacketLength {
     }
 }
 
-/// Represents amount of bytes appended after each packet
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct FrameCyclicSequence(pub u8);
 
@@ -201,7 +182,7 @@ impl Display for FrameCyclicSequence {
 mod tests {
     use claim::assert_err;
 
-    use crate::capture_header::{
+    use crate::pcap::capture_header::{
         CaptureHeader, Endianness, FrameCyclicSequence, LinkLayerType, MaximumPacketLength,
         TimestampPrecision, Version,
     };

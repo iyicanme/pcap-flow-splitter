@@ -61,7 +61,7 @@ mod test {
 
     use claim::assert_err;
 
-    use crate::capture_file::CaptureFile;
+    use crate::pcap::capture_file::CaptureFile;
 
     const PAYLOAD_LENGTH: usize = 32;
 

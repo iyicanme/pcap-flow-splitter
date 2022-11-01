@@ -1,13 +1,190 @@
 use crate::endianness_aware_cursor::{Endianness, ReadOnlyEndiannessAwareCursor};
-use crate::link_layer_type::LinkLayerType;
 use crate::packet::Packet;
+use crate::packet_layer::{
+    ApplicationLayerType, LinkLayerType, NetworkLayerType, TransportLayerType,
+};
+use std::ops::{BitAnd, Mul, Shr};
 
-pub struct PacketDissection {}
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub struct PacketDissection {
+    pub link_layer: LinkLayer,
+    pub network_layer: NetworkLayer,
+    pub transport_layer: TransportLayer,
+}
 
 impl PacketDissection {
-    pub fn from_packet(packet: &Packet, endianness: Endianness, link_layer_type: LinkLayerType) {
-        let cursor = ReadOnlyEndiannessAwareCursor::new(packet.as_slice(), endianness);
+    pub fn from_packet(
+        packet: &Packet,
+        endianness: Endianness,
+        link_layer_type: LinkLayerType,
+    ) -> Result<PacketDissection, ()> {
+        let mut cursor = ReadOnlyEndiannessAwareCursor::new(packet.as_slice(), endianness);
 
-        match LinkLayerType {}
+        let link_layer = LinkLayer::parse(&mut cursor, link_layer_type)?;
+        let network_layer = NetworkLayer::parse(&mut cursor, link_layer.get_network_layer_type())?;
+        let transport_layer =
+            TransportLayer::parse(&mut cursor, network_layer.get_transport_layer_type())?;
+
+        let packet_dissection = PacketDissection {
+            link_layer,
+            network_layer,
+            transport_layer,
+        };
+
+        Ok(packet_dissection)
+    }
+}
+
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub enum LinkLayer {
+    Ethernet(NetworkLayerType),
+}
+
+impl LinkLayer {
+    pub fn parse(
+        cursor: &mut ReadOnlyEndiannessAwareCursor,
+        link_layer_type: LinkLayerType,
+    ) -> Result<Self, ()> {
+        let layer = match link_layer_type {
+            LinkLayerType::En10Mb => {
+                cursor.advance(12);
+
+                let a = cursor.get_u16();
+                let next_layer_type = match a {
+                    0x0008 => NetworkLayerType::IPv4,
+                    0xDD86 => NetworkLayerType::IPv6,
+                    _ => return Err(()),
+                };
+
+                LinkLayer::Ethernet(next_layer_type)
+            }
+        };
+
+        Ok(layer)
+    }
+
+    pub fn get_network_layer_type(&self) -> NetworkLayerType {
+        match self {
+            LinkLayer::Ethernet(next) => *next,
+        }
+    }
+}
+
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub enum NetworkLayer {
+    IPv4(u32, u32, TransportLayerType),
+    IPv6(u128, u128, TransportLayerType),
+}
+
+impl NetworkLayer {
+    pub fn parse(
+        cursor: &mut ReadOnlyEndiannessAwareCursor,
+        network_layer_type: NetworkLayerType,
+    ) -> Result<Self, ()> {
+        let layer = match network_layer_type {
+            NetworkLayerType::IPv4 => {
+                let option_length: usize =
+                    cursor.get_u8().bitand(0x0F).mul(4).wrapping_sub(20).into();
+
+                cursor.advance(8);
+                let protocol = match cursor.get_u8() {
+                    6 => TransportLayerType::TCP,
+                    17 => TransportLayerType::UDP,
+                    _ => return Err(()),
+                };
+                cursor.advance(2);
+
+                let layer = NetworkLayer::IPv4(cursor.get_u32(), cursor.get_u32(), protocol);
+                cursor.advance(option_length);
+
+                layer
+            }
+            NetworkLayerType::IPv6 => {
+                let ipv6_option_header_ids = [0u8, 43u8, 44u8, 51u8, 60u8];
+
+                cursor.advance(6);
+
+                let mut next_header = cursor.get_u8();
+                let mut check_next_header = ipv6_option_header_ids.contains(&next_header);
+
+                cursor.advance(1);
+
+                let source = cursor.get_u128();
+                let destination = cursor.get_u128();
+
+                while check_next_header {
+                    let new_next_header = cursor.get_u8();
+                    match next_header {
+                        0 | 43 => cursor.advance(15),
+                        44 => cursor.advance(7),
+                        51 => {
+                            let advancement = cursor.get_u8().wrapping_sub(2).into();
+                            cursor.advance(advancement);
+                        }
+                        60 => {
+                            let advancement = cursor.get_u8().wrapping_add(6).into();
+                            cursor.advance(advancement);
+                        }
+                        _ => return Err(()),
+                    }
+
+                    next_header = new_next_header;
+                    check_next_header = ipv6_option_header_ids.contains(&new_next_header);
+                }
+
+                let protocol = match next_header {
+                    6 => TransportLayerType::TCP,
+                    17 => TransportLayerType::UDP,
+                    _ => return Err(()),
+                };
+
+                NetworkLayer::IPv6(source, destination, protocol)
+            }
+        };
+
+        Ok(layer)
+    }
+
+    pub fn get_transport_layer_type(&self) -> TransportLayerType {
+        match self {
+            NetworkLayer::IPv4(_, _, next) | NetworkLayer::IPv6(_, _, next) => *next,
+        }
+    }
+}
+
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub enum TransportLayer {
+    Udp(u16, u16, ApplicationLayerType),
+    Tcp(u16, u16, ApplicationLayerType),
+}
+
+impl TransportLayer {
+    pub fn parse(
+        cursor: &mut ReadOnlyEndiannessAwareCursor,
+        transport_layer_type: TransportLayerType,
+    ) -> Result<Self, ()> {
+        let layer = match transport_layer_type {
+            TransportLayerType::TCP => {
+                let source = cursor.get_u16();
+                let destination = cursor.get_u16();
+
+                cursor.advance(8);
+                let remaining_header_length: usize =
+                    cursor.get_u8().shr(4u8).mul(4).wrapping_sub(13).into();
+                cursor.advance(remaining_header_length);
+
+                TransportLayer::Tcp(source, destination, ApplicationLayerType::OctetArray)
+            }
+            TransportLayerType::UDP => {
+                let source = cursor.get_u16();
+                let destination = cursor.get_u16();
+
+                cursor.advance(4);
+
+                TransportLayer::Udp(source, destination, ApplicationLayerType::OctetArray)
+            }
+        };
+
+        Ok(layer)
     }
 }

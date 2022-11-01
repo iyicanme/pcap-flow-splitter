@@ -20,6 +20,10 @@ impl<'a> ReadOnlyEndiannessAwareCursor<'a> {
         self.buffer.advance(advancement);
     }
 
+    pub fn get_u8(&mut self) -> u8 {
+        self.buffer.get_u8()
+    }
+
     pub fn get_u16(&mut self) -> u16 {
         match self.endianness {
             Endianness::Identical => self.buffer.get_u16(),
@@ -31,6 +35,20 @@ impl<'a> ReadOnlyEndiannessAwareCursor<'a> {
         match self.endianness {
             Endianness::Identical => self.buffer.get_u32(),
             Endianness::Swapped => self.buffer.get_u32_le(),
+        }
+    }
+
+    pub fn get_u64(&mut self) -> u64 {
+        match self.endianness {
+            Endianness::Identical => self.buffer.get_u64(),
+            Endianness::Swapped => self.buffer.get_u64_le(),
+        }
+    }
+
+    pub fn get_u128(&mut self) -> u128 {
+        match self.endianness {
+            Endianness::Identical => self.buffer.get_u128(),
+            Endianness::Swapped => self.buffer.get_u128_le(),
         }
     }
 }
@@ -58,6 +76,10 @@ impl WriteOnlyEndiannessAwareCursor {
         self.buffer
     }
 
+    pub fn put_u8(&mut self, value: u8) {
+        self.buffer.put_u8(value);
+    }
+
     pub fn put_u16(&mut self, value: u16) {
         match self.endianness {
             Endianness::Identical => self.buffer.put_u16_le(value),
@@ -69,6 +91,20 @@ impl WriteOnlyEndiannessAwareCursor {
         match self.endianness {
             Endianness::Identical => self.buffer.put_u32_le(value),
             Endianness::Swapped => self.buffer.put_u32(value),
+        }
+    }
+
+    pub fn put_u64(&mut self, value: u64) {
+        match self.endianness {
+            Endianness::Identical => self.buffer.put_u64_le(value),
+            Endianness::Swapped => self.buffer.put_u64(value),
+        }
+    }
+
+    pub fn put_u128(&mut self, value: u128) {
+        match self.endianness {
+            Endianness::Identical => self.buffer.put_u128(value),
+            Endianness::Swapped => self.buffer.put_u128_le(value),
         }
     }
 }

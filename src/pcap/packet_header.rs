@@ -5,21 +5,16 @@ use crate::endianness_aware_cursor::{
 };
 use crate::pcap::capture_header::TimestampPrecision;
 
-/// Represents the header of a packet in the capture.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct PacketHeader {
-    /// Timestamp of packet
     pub timestamp: Timestamp,
-    /// Length of packet in the capture file
     pub captured_length: PacketLength,
-    /// Actual length of packet, if it wasn't truncated because of maximum capture length
     pub actual_length: PacketLength,
 }
 
 impl PacketHeader {
     pub(crate) const LENGTH: usize = 16;
 
-    /// Takes a buffer that contains a capture header and returns a parsed `PacketHeader`
     pub fn parse(
         buffer: &[u8],
         endianness: Endianness,
@@ -38,7 +33,6 @@ impl PacketHeader {
         }
     }
 
-    /// Takes a `PacketHeader` and returns the corresponding binary representation
     pub fn compose(&self, endianness: Endianness) -> Vec<u8> {
         let mut cursor = WriteOnlyEndiannessAwareCursor::new(endianness);
 
@@ -61,7 +55,6 @@ impl Display for PacketHeader {
     }
 }
 
-/// Timestamp of a packet
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct Timestamp(pub TimestampPrecision, pub u32, pub u32);
 
@@ -98,9 +91,9 @@ impl From<u32> for PacketLength {
 
 #[cfg(test)]
 mod tests {
-    use crate::capture_header::TimestampPrecision;
-    use crate::endianness::Endianness;
-    use crate::packet_header::{PacketHeader, PacketLength, Timestamp};
+    use crate::endianness_aware_cursor::Endianness;
+    use crate::pcap::capture_header::TimestampPrecision;
+    use crate::pcap::packet_header::{PacketHeader, PacketLength, Timestamp};
 
     #[test]
     fn parsing_packet_header_succeeds() {
