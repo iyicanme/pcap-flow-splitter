@@ -7,7 +7,7 @@ pub struct Packet {
 
 impl From<Vec<u8>> for Packet {
     fn from(buffer: Vec<u8>) -> Self {
-        Packet { buffer }
+        Self { buffer }
     }
 }
 

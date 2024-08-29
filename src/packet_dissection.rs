@@ -1,9 +1,10 @@
+use std::ops::{BitAnd, Mul, Shr};
+
 use crate::endianness_aware_cursor::{Endianness, ReadOnlyEndiannessAwareCursor};
 use crate::packet::Packet;
 use crate::packet_layer::{
     ApplicationLayerType, LinkLayerType, NetworkLayerType, TransportLayerType,
 };
-use std::ops::{BitAnd, Mul, Shr};
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct PacketDissection {
@@ -17,7 +18,7 @@ impl PacketDissection {
         packet: &Packet,
         endianness: Endianness,
         link_layer_type: LinkLayerType,
-    ) -> Result<PacketDissection, ()> {
+    ) -> Result<Self, ()> {
         let mut cursor = ReadOnlyEndiannessAwareCursor::new(packet.as_slice(), endianness);
 
         let link_layer = LinkLayer::parse(&mut cursor, link_layer_type)?;
@@ -25,7 +26,7 @@ impl PacketDissection {
         let transport_layer =
             TransportLayer::parse(&mut cursor, network_layer.get_transport_layer_type())?;
 
-        let packet_dissection = PacketDissection {
+        let packet_dissection = Self {
             link_layer,
             network_layer,
             transport_layer,
@@ -56,16 +57,16 @@ impl LinkLayer {
                     _ => return Err(()),
                 };
 
-                LinkLayer::Ethernet(next_layer_type)
+                Self::Ethernet(next_layer_type)
             }
         };
 
         Ok(layer)
     }
 
-    pub fn get_network_layer_type(&self) -> NetworkLayerType {
+    pub const fn get_network_layer_type(&self) -> NetworkLayerType {
         match self {
-            LinkLayer::Ethernet(next) => *next,
+            Self::Ethernet(next) => *next,
         }
     }
 }
@@ -94,7 +95,7 @@ impl NetworkLayer {
                 };
                 cursor.advance(2);
 
-                let layer = NetworkLayer::IPv4(cursor.get_u32(), cursor.get_u32(), protocol);
+                let layer = Self::IPv4(cursor.get_u32(), cursor.get_u32(), protocol);
                 cursor.advance(option_length);
 
                 layer
@@ -138,16 +139,16 @@ impl NetworkLayer {
                     _ => return Err(()),
                 };
 
-                NetworkLayer::IPv6(source, destination, protocol)
+                Self::IPv6(source, destination, protocol)
             }
         };
 
         Ok(layer)
     }
 
-    pub fn get_transport_layer_type(&self) -> TransportLayerType {
+    pub const fn get_transport_layer_type(&self) -> TransportLayerType {
         match self {
-            NetworkLayer::IPv4(_, _, next) | NetworkLayer::IPv6(_, _, next) => *next,
+            Self::IPv4(_, _, next) | Self::IPv6(_, _, next) => *next,
         }
     }
 }
@@ -173,7 +174,7 @@ impl TransportLayer {
                     cursor.get_u8().shr(4u8).mul(4).wrapping_sub(13).into();
                 cursor.advance(remaining_header_length);
 
-                TransportLayer::Tcp(source, destination, ApplicationLayerType::OctetArray)
+                Self::Tcp(source, destination, ApplicationLayerType::OctetArray)
             }
             TransportLayerType::UDP => {
                 let source = cursor.get_u16();
@@ -181,7 +182,7 @@ impl TransportLayer {
 
                 cursor.advance(4);
 
-                TransportLayer::Udp(source, destination, ApplicationLayerType::OctetArray)
+                Self::Udp(source, destination, ApplicationLayerType::OctetArray)
             }
         };
 

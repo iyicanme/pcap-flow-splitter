@@ -8,7 +8,7 @@ pub struct ReadOnlyEndiannessAwareCursor<'a> {
 }
 
 impl<'a> ReadOnlyEndiannessAwareCursor<'a> {
-    pub fn new(buffer: &'a [u8], endianness: Endianness) -> Self {
+    pub const fn new(buffer: &'a [u8], endianness: Endianness) -> Self {
         Self { buffer, endianness }
     }
 
@@ -59,7 +59,7 @@ pub struct WriteOnlyEndiannessAwareCursor {
 }
 
 impl WriteOnlyEndiannessAwareCursor {
-    pub fn new(endianness: Endianness) -> Self {
+    pub const fn new(endianness: Endianness) -> Self {
         Self {
             buffer: Vec::new(),
             endianness,
@@ -124,8 +124,8 @@ impl Display for Endianness {
             f,
             "{}",
             match self {
-                Endianness::Identical => "identical",
-                Endianness::Swapped => "swapped",
+                Self::Identical => "identical",
+                Self::Swapped => "swapped",
             }
         )
     }

@@ -3,7 +3,7 @@ use std::fmt::{Display, Formatter};
 use crate::endianness_aware_cursor::{
     Endianness, ReadOnlyEndiannessAwareCursor, WriteOnlyEndiannessAwareCursor,
 };
-use crate::pcap::capture_header::TimestampPrecision;
+use crate::capture_header::TimestampPrecision;
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct PacketHeader {
@@ -26,7 +26,7 @@ impl PacketHeader {
         let captured_length = PacketLength(cursor.get_u32());
         let actual_length = PacketLength(cursor.get_u32());
 
-        PacketHeader {
+        Self {
             timestamp,
             captured_length,
             actual_length,
@@ -79,7 +79,7 @@ impl Display for PacketLength {
 
 impl From<PacketLength> for usize {
     fn from(packet_length: PacketLength) -> Self {
-        packet_length.0 as usize
+        packet_length.0 as Self
     }
 }
 
@@ -92,8 +92,8 @@ impl From<u32> for PacketLength {
 #[cfg(test)]
 mod tests {
     use crate::endianness_aware_cursor::Endianness;
-    use crate::pcap::capture_header::TimestampPrecision;
-    use crate::pcap::packet_header::{PacketHeader, PacketLength, Timestamp};
+    use crate::capture_header::TimestampPrecision;
+    use crate::packet_header::{PacketHeader, PacketLength, Timestamp};
 
     #[test]
     fn parsing_packet_header_succeeds() {

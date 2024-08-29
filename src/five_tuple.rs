@@ -1,5 +1,7 @@
+use base64::Engine;
+use base64::prelude::BASE64_STANDARD;
+
 use crate::packet_dissection::{NetworkLayer, PacketDissection, TransportLayer};
-use base64;
 
 #[derive(Eq, PartialEq, Hash)]
 pub struct FiveTuple {
@@ -7,9 +9,7 @@ pub struct FiveTuple {
 }
 
 impl FiveTuple {
-    pub fn from_packet_dissection(dissection: PacketDissection) -> Self {
-        let a: Vec<u8> = Vec::new();
-
+    pub fn from_packet_dissection(dissection: &PacketDissection) -> Self {
         let (mut address, is_source_lower, mut is_v6) = match dissection.network_layer {
             NetworkLayer::IPv4(source, destination, _) => {
                 let is_source_lower = source < destination;
@@ -84,12 +84,12 @@ impl FiveTuple {
         five_tuple.append(&mut is_v6);
         five_tuple.append(&mut is_tcp);
 
-        FiveTuple {
+        Self {
             inner: five_tuple,
         }
     }
 
     pub fn as_base64(&self) -> String {
-        base64::encode(&self.inner)
+        BASE64_STANDARD.encode(&self.inner)
     }
 }

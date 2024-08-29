@@ -11,7 +11,7 @@ impl Display for LinkLayerType {
             f,
             "{}",
             match self {
-                LinkLayerType::En10Mb => "Ethernet",
+                Self::En10Mb => "Ethernet",
             }
         )
     }
@@ -29,8 +29,8 @@ impl Display for NetworkLayerType {
             f,
             "{}",
             match self {
-                NetworkLayerType::IPv4 => "IPv4",
-                NetworkLayerType::IPv6 => "IPv6",
+                Self::IPv4 => "IPv4",
+                Self::IPv6 => "IPv6",
             }
         )
     }
@@ -48,8 +48,8 @@ impl Display for TransportLayerType {
             f,
             "{}",
             match self {
-                TransportLayerType::UDP => "UDP",
-                TransportLayerType::TCP => "TCP",
+                Self::UDP => "UDP",
+                Self::TCP => "TCP",
             }
         )
     }
@@ -66,7 +66,7 @@ impl Display for ApplicationLayerType {
             f,
             "{}",
             match self {
-                ApplicationLayerType::OctetArray => "Octet Stream",
+                Self::OctetArray => "Octet Stream",
             }
         )
     }

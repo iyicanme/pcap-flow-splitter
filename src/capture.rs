@@ -1,31 +1,22 @@
 use std::error::Error;
 use std::path::Path;
+
+use crate::capture_file::{ReadFile, WriteFile};
+use crate::capture_header::{CaptureHeader, TimestampPrecision};
 use crate::endianness_aware_cursor::Endianness;
-
 use crate::packet::Packet;
-use crate::pcap::capture_file::CaptureFile;
-use crate::pcap::capture_header::{CaptureHeader, TimestampPrecision};
-use crate::pcap::packet_header::PacketHeader;
-
-mod capture_file;
-
-mod capture_header;
-mod endian_aware_buffer;
-mod error;
-
-mod endianness;
-mod packet_header;
+use crate::packet_header::PacketHeader;
 
 #[derive(Debug)]
 pub struct ReadOnlyCapture {
-    file: CaptureFile,
+    file: ReadFile,
     endianness: Endianness,
     timestamp_precision: TimestampPrecision,
 }
 
 impl ReadOnlyCapture {
     pub fn open(path: impl AsRef<Path>) -> Result<(CaptureHeader, Self), Box<dyn Error>> {
-        let mut file = CaptureFile::open(path)?;
+        let mut file = ReadFile::open(path)?;
         let header_buffer = file.read(CaptureHeader::LENGTH)?;
         let header = CaptureHeader::parse(&header_buffer)?;
 
@@ -60,13 +51,13 @@ impl Iterator for ReadOnlyCapture {
 
 #[derive(Debug)]
 pub struct WriteOnlyCapture {
-    file: CaptureFile,
+    file: WriteFile,
     endianness: Endianness,
 }
 
 impl WriteOnlyCapture {
     pub fn create(path: impl AsRef<Path>, header: CaptureHeader) -> Result<Self, Box<dyn Error>> {
-        let mut file = CaptureFile::create(path)?;
+        let mut file = WriteFile::create(path)?;
         let header_buffer = CaptureHeader::compose(&header);
         file.write(header_buffer.as_slice())?;
 

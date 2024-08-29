@@ -1,14 +1,20 @@
 use std::collections::HashMap;
-use crate::packet_dissection::PacketDissection;
-use pcap::{ReadOnlyCapture, WriteOnlyCapture};
-use crate::five_tuple::FiveTuple;
 
+use capture::{ReadOnlyCapture, WriteOnlyCapture};
+
+use crate::five_tuple::FiveTuple;
+use crate::packet_dissection::PacketDissection;
+
+mod capture;
+mod capture_file;
+mod capture_header;
 mod endianness_aware_cursor;
+mod error;
+mod five_tuple;
 mod packet;
 mod packet_dissection;
+mod packet_header;
 mod packet_layer;
-mod pcap;
-mod five_tuple;
 
 fn main() {
     let (capture_header, capture) = ReadOnlyCapture::open("./http.cap").unwrap();
@@ -21,7 +27,7 @@ fn main() {
             capture_header.link_layer_type,
         ).unwrap();
 
-        let five_tuple = FiveTuple::from_packet_dissection(packet_dissection);
+        let five_tuple = FiveTuple::from_packet_dissection(&packet_dissection);
         if let Some(out_capture) = out_files.get_mut(&five_tuple) {
             out_capture.put(packet_header, &packet).unwrap();
         } else {

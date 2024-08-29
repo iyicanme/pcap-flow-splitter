@@ -1,12 +1,11 @@
-use std::error::Error;
 use std::fmt::{Display, Formatter};
 use std::ops::{BitAnd, Shl};
 
 use crate::endianness_aware_cursor::{
     Endianness, ReadOnlyEndiannessAwareCursor, WriteOnlyEndiannessAwareCursor,
 };
+use crate::error::Error;
 use crate::packet_layer::LinkLayerType;
-use crate::pcap::error::DummyError;
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct CaptureHeader {
@@ -30,23 +29,23 @@ impl CaptureHeader {
     const FRAME_CYCLIC_SEQUENCE_FLAG_MASK: u32 = 0x10_00_00_00;
     const FRAME_CYCLIC_SEQUENCE_MASK: u32 = 0xE0_00_00_00;
 
-    pub fn parse(buffer: &[u8]) -> Result<Self, Box<dyn Error>> {
+    pub fn parse(buffer: &[u8]) -> Result<Self, Error> {
         let mut cursor = ReadOnlyEndiannessAwareCursor::new(buffer, Endianness::Identical);
 
         let (endianness, timestamp_precision) = match cursor.get_u32() {
-            CaptureHeader::MAGIC_NUMBER_IDENTICAL_MICRO => {
+            Self::MAGIC_NUMBER_IDENTICAL_MICRO => {
                 (Endianness::Identical, TimestampPrecision::Micro)
             }
-            CaptureHeader::MAGIC_NUMBER_SWAPPED_MICRO => {
+            Self::MAGIC_NUMBER_SWAPPED_MICRO => {
                 (Endianness::Swapped, TimestampPrecision::Micro)
             }
-            CaptureHeader::MAGIC_NUMBER_IDENTICAL_NANO => {
+            Self::MAGIC_NUMBER_IDENTICAL_NANO => {
                 (Endianness::Identical, TimestampPrecision::Nano)
             }
-            CaptureHeader::MAGIC_NUMBER_SWAPPED_NANO => {
+            Self::MAGIC_NUMBER_SWAPPED_NANO => {
                 (Endianness::Swapped, TimestampPrecision::Nano)
             }
-            _ => return Err(DummyError::new()),
+            magic_number => return Err(Error::UnknownMagicNumber(magic_number)),
         };
 
         cursor.set_endianness(endianness);
@@ -57,16 +56,16 @@ impl CaptureHeader {
 
         let fcs_link_layer_type = cursor.get_u32();
         let (frame_cyclic_sequence, link_layer_type) = {
-            let link_layer_type = match fcs_link_layer_type & CaptureHeader::LINK_LAYER_TYPE_MASK {
+            let link_layer_type = match fcs_link_layer_type & Self::LINK_LAYER_TYPE_MASK {
                 1 => LinkLayerType::En10Mb,
-                _ => return Err(DummyError::new()),
+                link_layer_type => return Err(Error::UnknownLinkLayerType(link_layer_type)),
             };
 
             let frame_cyclic_sequence =
-                if (fcs_link_layer_type & CaptureHeader::FRAME_CYCLIC_SEQUENCE_FLAG_MASK) != 0 {
+                if (fcs_link_layer_type & Self::FRAME_CYCLIC_SEQUENCE_FLAG_MASK) != 0 {
                     let frame_cyclic_sequence: FrameCyclicSequence = FrameCyclicSequence(
                         fcs_link_layer_type
-                            .bitand(CaptureHeader::FRAME_CYCLIC_SEQUENCE_MASK)
+                            .bitand(Self::FRAME_CYCLIC_SEQUENCE_MASK)
                             .overflowing_shr(29)
                             .0 as u8,
                     );
@@ -79,7 +78,7 @@ impl CaptureHeader {
             (frame_cyclic_sequence, link_layer_type)
         };
 
-        let capture_header = CaptureHeader {
+        let capture_header = Self {
             endianness,
             timestamp_precision,
             version,
@@ -96,9 +95,9 @@ impl CaptureHeader {
 
         match self.timestamp_precision {
             TimestampPrecision::Micro => {
-                cursor.put_u32(CaptureHeader::MAGIC_NUMBER_IDENTICAL_MICRO);
+                cursor.put_u32(Self::MAGIC_NUMBER_IDENTICAL_MICRO);
             }
-            TimestampPrecision::Nano => cursor.put_u32(CaptureHeader::MAGIC_NUMBER_IDENTICAL_NANO),
+            TimestampPrecision::Nano => cursor.put_u32(Self::MAGIC_NUMBER_IDENTICAL_NANO),
         }
 
         cursor.put_u16(self.version.0);
@@ -111,10 +110,11 @@ impl CaptureHeader {
         let link_layer_type = match self.link_layer_type {
             LinkLayerType::En10Mb => 1,
         };
-        let frame_cyclic_sequence = match self.frame_cyclic_sequence {
-            Some(fcs) => (fcs.0 as u32).shl(29) | 1u32.shl(28),
-            None => 0,
-        };
+        let frame_cyclic_sequence = self.frame_cyclic_sequence
+            .map_or(
+                0,
+                |sequence| (sequence.0 as u32).shl(29) | 1u32.shl(28),
+            );
 
         cursor.put_u32(link_layer_type | frame_cyclic_sequence);
 
@@ -144,8 +144,8 @@ impl Display for TimestampPrecision {
             f,
             "{}",
             match self {
-                TimestampPrecision::Micro => "microsecond",
-                TimestampPrecision::Nano => "nanosecond",
+                Self::Micro => "microsecond",
+                Self::Nano => "nanosecond",
             }
         )
     }
@@ -182,7 +182,7 @@ impl Display for FrameCyclicSequence {
 mod tests {
     use claim::assert_err;
 
-    use crate::pcap::capture_header::{
+    use crate::capture_header::{
         CaptureHeader, Endianness, FrameCyclicSequence, LinkLayerType, MaximumPacketLength,
         TimestampPrecision, Version,
     };
