@@ -1,4 +1,7 @@
 use std::collections::HashMap;
+use std::ffi::OsString;
+
+use clap::Parser;
 
 use capture::{ReadOnlyCapture, WriteOnlyCapture};
 
@@ -17,7 +20,9 @@ mod packet_header;
 mod packet_layer;
 
 fn main() {
-    let (capture_header, capture) = ReadOnlyCapture::open("./http.cap").unwrap();
+    let args = Args::parse();
+
+    let (capture_header, capture) = ReadOnlyCapture::open(args.file_path).unwrap();
 
     let mut out_files: HashMap<FiveTuple, WriteOnlyCapture> = HashMap::new();
     for (packet_header, packet) in capture {
@@ -37,4 +42,11 @@ fn main() {
             out_files.insert(five_tuple, out_capture);
         }
     }
+}
+
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {
+    #[arg(short, long)]
+    file_path: OsString,
 }
