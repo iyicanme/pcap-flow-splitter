@@ -22,7 +22,14 @@ mod packet_layer;
 fn main() {
     let args = Args::parse();
 
-    let (capture_header, capture) = ReadOnlyCapture::open(args.file_path).unwrap();
+    match args.file_path {
+        Some(file_path) => oneshot(file_path),
+        None => {}
+    }
+}
+
+fn oneshot(file_path: OsString) {
+    let (capture_header, capture) = ReadOnlyCapture::open(file_path).unwrap();
 
     let mut out_files: HashMap<FiveTuple, WriteOnlyCapture> = HashMap::new();
     for (packet_header, packet) in capture {
@@ -47,6 +54,6 @@ fn main() {
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
-    #[arg(short, long)]
-    file_path: OsString,
+    #[arg(short, long, default_value = None)]
+    file_path: Option<OsString>,
 }
