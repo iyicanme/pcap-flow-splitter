@@ -1,5 +1,5 @@
-use base64::Engine;
 use base64::prelude::BASE64_STANDARD;
+use base64::Engine;
 
 use crate::packet_dissection::{NetworkLayer, PacketDissection, TransportLayer};
 
@@ -84,9 +84,7 @@ impl FiveTuple {
         five_tuple.append(&mut is_v6);
         five_tuple.append(&mut is_tcp);
 
-        Self {
-            inner: five_tuple,
-        }
+        Self { inner: five_tuple }
     }
 
     pub fn as_base64(&self) -> String {

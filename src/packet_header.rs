@@ -1,9 +1,9 @@
 use std::fmt::{Display, Formatter};
 
+use crate::capture_header::TimestampPrecision;
 use crate::endianness_aware_cursor::{
     Endianness, ReadOnlyEndiannessAwareCursor, WriteOnlyEndiannessAwareCursor,
 };
-use crate::capture_header::TimestampPrecision;
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct PacketHeader {
@@ -91,8 +91,8 @@ impl From<u32> for PacketLength {
 
 #[cfg(test)]
 mod tests {
-    use crate::endianness_aware_cursor::Endianness;
     use crate::capture_header::TimestampPrecision;
+    use crate::endianness_aware_cursor::Endianness;
     use crate::packet_header::{PacketHeader, PacketLength, Timestamp};
 
     #[test]

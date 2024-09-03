@@ -3,8 +3,8 @@ use std::ffi::OsString;
 
 use clap::Parser;
 
-use capture::{ReadOnlyCapture, WriteOnlyCapture};
 use crate::error::Error;
+use capture::{ReadOnlyCapture, WriteOnlyCapture};
 
 use crate::five_tuple::FiveTuple;
 use crate::packet_dissection::PacketDissection;
@@ -26,7 +26,7 @@ fn main() {
 
     match args.file_path {
         Some(file_path) => oneshot(file_path).unwrap(),
-        None => ui::run().unwrap()
+        None => ui::run().unwrap(),
     }
 }
 
@@ -35,13 +35,18 @@ fn oneshot(file_path: OsString) -> Result<(), Error> {
 
     let mut out_files: HashMap<FiveTuple, WriteOnlyCapture> = HashMap::new();
     for (packet_header, packet) in capture {
-        let packet_dissection = PacketDissection::from_packet(&packet, capture_header.endianness, capture_header.link_layer_type)?;
+        let packet_dissection = PacketDissection::from_packet(
+            &packet,
+            capture_header.endianness,
+            capture_header.link_layer_type,
+        )?;
 
         let five_tuple = FiveTuple::from_packet_dissection(&packet_dissection);
         if let Some(out_capture) = out_files.get_mut(&five_tuple) {
             out_capture.put(packet_header, &packet)?;
         } else {
-            let mut out_capture = WriteOnlyCapture::create(five_tuple.as_base64() + ".pcap", capture_header)?;
+            let mut out_capture =
+                WriteOnlyCapture::create(five_tuple.as_base64() + ".pcap", capture_header)?;
             out_capture.put(packet_header, &packet)?;
 
             out_files.insert(five_tuple, out_capture);

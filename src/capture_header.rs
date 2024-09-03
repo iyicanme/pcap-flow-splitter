@@ -36,15 +36,9 @@ impl CaptureHeader {
             Self::MAGIC_NUMBER_IDENTICAL_MICRO => {
                 (Endianness::Identical, TimestampPrecision::Micro)
             }
-            Self::MAGIC_NUMBER_SWAPPED_MICRO => {
-                (Endianness::Swapped, TimestampPrecision::Micro)
-            }
-            Self::MAGIC_NUMBER_IDENTICAL_NANO => {
-                (Endianness::Identical, TimestampPrecision::Nano)
-            }
-            Self::MAGIC_NUMBER_SWAPPED_NANO => {
-                (Endianness::Swapped, TimestampPrecision::Nano)
-            }
+            Self::MAGIC_NUMBER_SWAPPED_MICRO => (Endianness::Swapped, TimestampPrecision::Micro),
+            Self::MAGIC_NUMBER_IDENTICAL_NANO => (Endianness::Identical, TimestampPrecision::Nano),
+            Self::MAGIC_NUMBER_SWAPPED_NANO => (Endianness::Swapped, TimestampPrecision::Nano),
             magic_number => return Err(Error::UnknownMagicNumber(magic_number)),
         };
 
@@ -110,11 +104,9 @@ impl CaptureHeader {
         let link_layer_type = match self.link_layer_type {
             LinkLayerType::En10Mb => 1,
         };
-        let frame_cyclic_sequence = self.frame_cyclic_sequence
-            .map_or(
-                0,
-                |sequence| (sequence.0 as u32).shl(29) | 1u32.shl(28),
-            );
+        let frame_cyclic_sequence = self
+            .frame_cyclic_sequence
+            .map_or(0, |sequence| (sequence.0 as u32).shl(29) | 1u32.shl(28));
 
         cursor.put_u32(link_layer_type | frame_cyclic_sequence);
 

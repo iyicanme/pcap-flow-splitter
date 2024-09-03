@@ -15,12 +15,17 @@ pub struct PacketDissection {
 }
 
 impl PacketDissection {
-    pub fn from_packet(packet: &Packet, endianness: Endianness, link_layer_type: LinkLayerType) -> Result<Self, Error> {
+    pub fn from_packet(
+        packet: &Packet,
+        endianness: Endianness,
+        link_layer_type: LinkLayerType,
+    ) -> Result<Self, Error> {
         let mut cursor = ReadOnlyEndiannessAwareCursor::new(packet.as_slice(), endianness);
 
         let link_layer = LinkLayer::parse(&mut cursor, link_layer_type)?;
         let network_layer = NetworkLayer::parse(&mut cursor, link_layer.get_network_layer_type())?;
-        let transport_layer = TransportLayer::parse(&mut cursor, network_layer.get_transport_layer_type())?;
+        let transport_layer =
+            TransportLayer::parse(&mut cursor, network_layer.get_transport_layer_type())?;
 
         let packet_dissection = Self {
             link_layer,
@@ -50,7 +55,9 @@ impl LinkLayer {
                 let next_layer_type = match a {
                     0x0008 => NetworkLayerType::IPv4,
                     0xDD86 => NetworkLayerType::IPv6,
-                    network_layer_type => return Err(Error::UnknownNetworkLayerType(network_layer_type)),
+                    network_layer_type => {
+                        return Err(Error::UnknownNetworkLayerType(network_layer_type))
+                    }
                 };
 
                 Self::Ethernet(next_layer_type)
@@ -80,13 +87,16 @@ impl NetworkLayer {
     ) -> Result<Self, Error> {
         let layer = match network_layer_type {
             NetworkLayerType::IPv4 => {
-                let option_length: usize = cursor.get_u8().bitand(0x0F).mul(4).wrapping_sub(20).into();
+                let option_length: usize =
+                    cursor.get_u8().bitand(0x0F).mul(4).wrapping_sub(20).into();
 
                 cursor.advance(8);
                 let protocol = match cursor.get_u8() {
                     6 => TransportLayerType::TCP,
                     17 => TransportLayerType::UDP,
-                    transport_layer_type => return Err(Error::UnknownTransportLayerType(transport_layer_type)),
+                    transport_layer_type => {
+                        return Err(Error::UnknownTransportLayerType(transport_layer_type))
+                    }
                 };
                 cursor.advance(2);
 
@@ -121,7 +131,11 @@ impl NetworkLayer {
                             let advancement = cursor.get_u8().wrapping_add(6).into();
                             cursor.advance(advancement);
                         }
-                        next_header_length => return Err(Error::UnknownIPv6AdditionalHeaderLength(next_header_length)),
+                        next_header_length => {
+                            return Err(Error::UnknownIPv6AdditionalHeaderLength(
+                                next_header_length,
+                            ))
+                        }
                     }
 
                     next_header = new_next_header;
@@ -131,7 +145,9 @@ impl NetworkLayer {
                 let protocol = match next_header {
                     6 => TransportLayerType::TCP,
                     17 => TransportLayerType::UDP,
-                    transport_layer_type => return Err(Error::UnknownTransportLayerType(transport_layer_type)),
+                    transport_layer_type => {
+                        return Err(Error::UnknownTransportLayerType(transport_layer_type))
+                    }
                 };
 
                 Self::IPv6(source, destination, protocol)
@@ -165,7 +181,8 @@ impl TransportLayer {
                 let destination = cursor.get_u16();
 
                 cursor.advance(8);
-                let remaining_header_length: usize = cursor.get_u8().shr(4u8).mul(4).wrapping_sub(13).into();
+                let remaining_header_length: usize =
+                    cursor.get_u8().shr(4u8).mul(4).wrapping_sub(13).into();
                 cursor.advance(remaining_header_length);
 
                 Self::Tcp(source, destination, ApplicationLayerType::OctetArray)

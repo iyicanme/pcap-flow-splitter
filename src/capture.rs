@@ -20,18 +20,19 @@ impl ReadOnlyCapture {
         let header_buffer = file.read(CaptureHeader::LENGTH)?;
         let header = CaptureHeader::parse(&header_buffer)?;
 
-        let capture = Self { file, endianness: header.endianness, timestamp_precision: header.timestamp_precision };
+        let capture = Self {
+            file,
+            endianness: header.endianness,
+            timestamp_precision: header.timestamp_precision,
+        };
 
         Ok((header, capture))
     }
 
     pub fn get(&mut self) -> Result<(PacketHeader, Packet), Error> {
         let header_buffer = self.file.read(PacketHeader::LENGTH)?;
-        let packet_header = PacketHeader::parse(
-            &header_buffer,
-            self.endianness,
-            self.timestamp_precision,
-        );
+        let packet_header =
+            PacketHeader::parse(&header_buffer, self.endianness, self.timestamp_precision);
 
         let packet_length = packet_header.captured_length;
         let packet_buffer = self.file.read(packet_length.into())?;
@@ -61,7 +62,10 @@ impl WriteOnlyCapture {
         let header_buffer = CaptureHeader::compose(&header);
         file.write(header_buffer.as_slice())?;
 
-        let capture = Self { file, endianness: header.endianness };
+        let capture = Self {
+            file,
+            endianness: header.endianness,
+        };
 
         Ok(capture)
     }

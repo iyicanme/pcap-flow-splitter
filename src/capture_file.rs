@@ -25,7 +25,9 @@ impl ReadFile {
 
     pub fn read(&mut self, size: usize) -> Result<Vec<u8>, Error> {
         let mut buffer: Vec<u8> = vec![0; size];
-        self.inner.read_exact(buffer.as_mut_slice()).map_err(Error::CaptureFileRead)?;
+        self.inner
+            .read_exact(buffer.as_mut_slice())
+            .map_err(Error::CaptureFileRead)?;
 
         Ok(buffer)
     }
@@ -41,7 +43,9 @@ impl WriteFile {
     }
 
     pub fn write(&mut self, buffer: &[u8]) -> Result<(), Error> {
-        self.inner.write_all(buffer).map_err(Error::CaptureFileWrite)?;
+        self.inner
+            .write_all(buffer)
+            .map_err(Error::CaptureFileWrite)?;
 
         Ok(())
     }
