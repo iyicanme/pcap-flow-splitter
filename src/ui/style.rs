@@ -10,6 +10,7 @@ pub const TABLE: Style = Style::new().fg(color::TABLE.fg()).bg(color::TABLE.bg()
 
 pub mod table {
     use ratatui::prelude::Style;
+    use ratatui::style::Stylize;
 
     use crate::ui::style::color;
 
@@ -19,7 +20,8 @@ pub mod table {
     pub const ODD: Style = Style::new()
         .fg(color::table::ODD.fg())
         .bg(color::table::ODD.bg());
-    pub const HEADER: Style = ODD;
+
+    pub fn header() -> Style { ODD }
 
     pub mod selected {
         use ratatui::prelude::Style;
@@ -32,6 +34,15 @@ pub mod table {
         pub const ODD: Style = Style::new()
             .fg(color::table::selected::ODD.fg())
             .bg(color::table::selected::ODD.bg());
+    }
+
+    pub const fn get_row_style_by_index(index: usize, selected: bool) -> Style {
+        match (index % 2, selected) {
+            (0, false) => EVEN,
+            (_, false) => ODD,
+            (0, true) => selected::EVEN,
+            (_, true) => selected::ODD,
+        }
     }
 }
 

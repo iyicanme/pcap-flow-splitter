@@ -1,5 +1,5 @@
-use std::fs::FileType as OsFileType;
-use std::path::{Path, PathBuf};
+use std::borrow::Cow;
+use std::path::PathBuf;
 
 use crossterm::ExecutableCommand;
 use crossterm::terminal::{
@@ -11,10 +11,12 @@ use ratatui::widgets::{Block, Borders};
 
 use crate::error::Error;
 use crate::ui::context::Context;
+use crate::ui::directory::DirectoryContent;
 
 mod color;
 mod color_set;
 mod context;
+mod directory;
 mod style;
 mod table;
 
@@ -30,7 +32,6 @@ pub fn run() -> Result<(), Error> {
         Terminal::new(CrosstermBackend::new(std::io::stdout())).map_err(Error::TuiSetup)?;
 
     while !context.should_exit() {
-        context.update();
         terminal
             .draw(|frame| {
                 draw_ui(frame, &mut context);
@@ -62,9 +63,9 @@ fn draw_ui(frame: &mut Frame, context: &mut Context) {
 
 fn draw_header(frame: &mut Frame, context: &Context, area: Rect) {
     let title = match &context.state {
-        State::Browse { current_directory, current_directory_content, index } => current_directory.to_string_lossy().to_string(),
-        State::View { current_directory, current_file, index } => current_file,
-        State::Exit => String::new(),
+        State::Browse { current_directory, .. } => current_directory.to_string_lossy(),
+        State::View { current_file, .. } => Cow::from(current_file),
+        State::Exit => Cow::from(""),
     };
 
     let width = area.width as usize - 2usize;
@@ -84,18 +85,25 @@ fn draw_header(frame: &mut Frame, context: &Context, area: Rect) {
 
 fn draw_body(frame: &mut Frame, context: &mut Context, area: Rect) {
     match &mut context.state {
-        State::Browse { current_directory, current_directory_content, index } =>
-            table::draw(frame, area, ["", "", ""].into_iter(), current_directory_content.iter(), *index, &mut context.table_state),
-        State::View { current_directory, current_file, index } => {}
+        State::Browse { current_directory_content, index, .. } =>
+            {
+                context.table_state.select(Some(*index));
+                table::draw(frame, area, ["NAME"].into_iter(), current_directory_content.iter(), *index, &mut context.table_state);
+            }
+        State::View { .. } => { todo!() }
         State::Exit => {}
     }
 }
 
 fn draw_footer(frame: &mut Frame, state: &State, area: Rect) {
-    let instructions = "[↑] UP [↓] DOWN [ESC] EXIT [↵] ENTER";
-
+    let instructions = match state {
+        State::Browse { .. } =>  " [↑] UP [↓] DOWN [ESC] EXIT [↵] OPEN [BACKSP] GO ONE DIRECTORY UP ",
+        State::View { .. } => " [↑] UP [↓] DOWN [ESC] EXIT [BACKSP] CLOSE FILE ",
+        State::Exit => ""
+    };
+    
     let header = Block::new()
-        .title(format!(" {} ", instructions))
+        .title(instructions)
         .style(style::HEADER)
         .borders(Borders::TOP);
 
@@ -108,49 +116,6 @@ enum State {
     Exit,
 }
 
-struct DirectoryContent {
-    content: Vec<(FileType, String)>,
-}
 
-impl DirectoryContent {
-    fn read(directory: impl AsRef<Path>) -> Result<Self, Error> {
-        let content = std::fs::read_dir(directory)
-            .map_err(Error::ReadDirContent)?
-            .filter_map(Result::ok)
-            .filter_map(|e| e.file_type().map(|t| (t, e.file_name())).ok())
-            .filter_map(|(os_file_type, file_name)| FileType::try_from(os_file_type).map(|file_type| (file_type, file_name)).ok())
-            .map(|(file_type, file_name)| (style_from_file_type(file_type), file_name))
-            .collect();
 
-        Ok(DirectoryContent { content })
-    }
-}
 
-fn style_from_file_type(file_type: FileType) -> Style {
-    match file_type {
-        FileType::File => style::file(),
-        FileType::Directory => style::directory(),
-        FileType::SymbolicLink => style::symbolic_link(),
-    }
-}
-
-enum FileType {
-    File,
-    Directory,
-    SymbolicLink,
-}
-
-impl TryFrom<OsFileType> for FileType {
-    type Error = Error;
-
-    fn try_from(value: OsFileType) -> Result<Self, Self::Error> {
-        let file_type = match (value.is_file(), value.is_dir(), value.is_symlink()) {
-            (true, false, false) => Self::File,
-            (false, true, false) => Self::Directory,
-            (false, false, true) => Self::SymbolicLink,
-            _ => return Err(Error::FileTypeConversion)
-        };
-
-        Ok(file_type)
-    }
-}
