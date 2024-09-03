@@ -10,7 +10,8 @@ edition = "2021"
 bytes = "1.7"
 base64 = "0.22"
 clap = { version = "=4.5.11", features = ["derive"] }
-thiserror = "1.0"
+crossterm = "0.28"
+ratatui = "0.28"
 
 [dev-dependencies]
 claim = "0.5"

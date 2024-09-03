@@ -1,13 +1,23 @@
 use std::fmt::{Display, Formatter};
+use std::io::Error as IoError;
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug)]
 pub enum Error {
-    OpenCaptureFile(std::io::Error),
-    CaptureFileRead(std::io::Error),
-    CaptureFileCreate(std::io::Error),
-    CaptureFileWrite(std::io::Error),
+    OpenCaptureFile(IoError),
+    CaptureFileRead(IoError),
+    CaptureFileCreate(IoError),
+    CaptureFileWrite(IoError),
     UnknownMagicNumber(u32),
     UnknownLinkLayerType(u32),
+    TuiSetup(IoError),
+    TuiDraw(IoError),
+    TuiTeardown(IoError),
+    UnknownNetworkLayerType(u16),
+    UnknownTransportLayerType(u8),
+    UnknownIPv6AdditionalHeaderLength(u8),
+    ReadEnv(IoError),
+    ReadDirContent(IoError),
+    TuiReadInput(IoError),
 }
 
 impl Display for Error {
