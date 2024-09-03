@@ -18,6 +18,7 @@ pub enum Error {
     ReadEnv(IoError),
     ReadDirContent(IoError),
     TuiReadInput(IoError),
+    FileTypeConversion,
 }
 
 impl Display for Error {
