@@ -46,6 +46,15 @@ pub mod table {
     }
 }
 
+pub mod tabs {
+    use ratatui::style::Style;
+
+    use crate::ui::color;
+
+    pub const SELECTED: Style = Style::new().fg(color::tabs::SELECTED.fg()).bg(color::tabs::SELECTED.bg());
+    pub const UNSELECTED: Style = Style::new().fg(color::tabs::UNSELECTED.fg()).bg(color::tabs::UNSELECTED.bg());
+}
+
 pub fn file() -> Style { Style::new() }
 
 pub fn directory() -> Style { Style::new().bold() }

@@ -1,4 +1,4 @@
-use std::collections::hash_map::Entry;
+use std::collections::hash_map::{Entry, Keys};
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::path::Path;
@@ -27,7 +27,7 @@ pub fn extract_flows(file_path: impl AsRef<Path>) -> Result<Flows, Error> {
             Entry::Vacant(v) => { v.insert(vec![(packet_header, dissection)]); }
         }
     }
-    
+
     for (_, flow) in &mut packets {
         flow.sort_by(|(header, _), (other, _) | header.timestamp.cmp(&other.timestamp))
     }
@@ -59,6 +59,10 @@ pub struct Flows {
 impl<'a> Flows {
     pub fn iter(&self, index: usize) -> PacketIterator {
         PacketIterator { packets: self.inner.values().nth(index).expect("we ensure index is within 0..flows.len()").packets.iter(), index: 0 }
+    }
+
+    pub fn keys(&self) -> NameIterator {
+        NameIterator { names: self.inner.keys() }
     }
 
     pub fn len(&self) -> usize {
@@ -161,5 +165,17 @@ impl<'a> Iterator for PacketIterator<'a> {
 
             Row::new([self.index.to_string(), direction, p.timestamp.to_string(), p.size.to_string()])
         })
+    }
+}
+
+pub struct NameIterator<'a> {
+    names: Keys<'a, FiveTuple, Flow>,
+}
+
+impl<'a> Iterator for NameIterator<'a> {
+    type Item = String;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.names.next().map(|ft| ft.as_base64())
     }
 }
