@@ -84,6 +84,8 @@ impl DirectoryEntry {
     pub fn file_name(&self) -> OsString {
         self.file_name.clone()
     }
+
+    pub fn display_name(&self) -> String { self.display_name.clone() }
 }
 
 impl PartialOrd for DirectoryEntry {

@@ -9,6 +9,7 @@ use crate::ui::style::table::get_row_style_by_index;
 pub fn draw<'a>(
     frame: &mut Frame,
     rect: Rect,
+    widths: impl Iterator<Item=Constraint>,
     header: impl Iterator<Item=&'a str>,
     rows: impl Iterator<Item=Row<'a>>,
     selected: usize,
@@ -25,7 +26,7 @@ pub fn draw<'a>(
     let select_bar = " █ ";
     let highlight = Text::from(vec!["".into(), select_bar.into(), select_bar.into(), "".into()]);
     
-    let table = Table::new(rows, [Constraint::Min(1)])
+    let table = Table::new(rows, widths)
         .header(header)
         .highlight_style(selected_style)
         .highlight_symbol(highlight)

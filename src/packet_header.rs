@@ -1,4 +1,5 @@
 use std::fmt::{Display, Formatter};
+use std::ops::{Add, Mul};
 
 use crate::capture_header::TimestampPrecision;
 use crate::endianness_aware_cursor::{
@@ -13,7 +14,7 @@ pub struct PacketHeader {
 }
 
 impl PacketHeader {
-    pub(crate) const LENGTH: usize = 16;
+    pub const LENGTH: usize = 16;
 
     pub fn parse(
         buffer: &[u8],
@@ -58,11 +59,22 @@ impl Display for PacketHeader {
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct Timestamp(pub TimestampPrecision, pub u32, pub u32);
 
+impl Timestamp {
+    pub fn nanos(&self) -> u64 {
+        u64::from(self.1)
+            .mul(match self.0 {
+                TimestampPrecision::Micro => { 1_000_000u64 }
+                TimestampPrecision::Nano => { 1_000_000_000u64 }
+            })
+            .add(u64::from(self.2))
+    }
+}
+
 impl Display for Timestamp {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self.0 {
-            TimestampPrecision::Micro => write!(f, "{}.{:0>9}", self.1, self.2),
-            TimestampPrecision::Nano => write!(f, "{}.{:0>12}", self.1, self.2),
+            TimestampPrecision::Micro => write!(f, "{}.{:0>6}", self.1, self.2),
+            TimestampPrecision::Nano => write!(f, "{}.{:0>9}", self.1, self.2),
         }
     }
 }
@@ -70,6 +82,12 @@ impl Display for Timestamp {
 /// Length of the packet
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct PacketLength(pub u32);
+
+impl PacketLength {
+    pub fn as_usize(&self) -> usize {
+        self.0 as usize
+    }
+}
 
 impl Display for PacketLength {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {

@@ -3,7 +3,7 @@ use base64::Engine;
 
 use crate::packet_dissection::{NetworkLayer, PacketDissection, TransportLayer};
 
-#[derive(Eq, PartialEq, Hash)]
+#[derive(Eq, PartialEq, Hash, Clone)]
 pub struct FiveTuple {
     inner: Vec<u8>,
 }

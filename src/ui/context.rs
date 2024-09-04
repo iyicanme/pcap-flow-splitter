@@ -1,4 +1,5 @@
-use std::ops::{AddAssign, SubAssign};
+use std::ops::{AddAssign, BitXorAssign, SubAssign};
+use std::path::PathBuf;
 
 use crossterm::event;
 use crossterm::event::{Event, KeyCode};
@@ -6,7 +7,7 @@ use ratatui::widgets::TableState;
 
 use crate::error::Error;
 use crate::ui::directory::{DirectoryContent, DirectoryEntryType};
-use crate::ui::State;
+use crate::ui::flow::{extract_flows, Flows};
 
 pub struct Context {
     pub state: State,
@@ -39,21 +40,13 @@ impl Context {
         }
 
         match key.code {
-            KeyCode::Up => {
-                self.cursor_up();
-            }
-            KeyCode::Down => {
-                self.cursor_down();
-            }
-            KeyCode::Enter => {
-                self.enter();
-            }
-            KeyCode::Esc => {
-                self.exit();
-            }
-            KeyCode::Backspace => {
-                self.backspace();
-            }
+            KeyCode::Up => { self.cursor_up(); }
+            KeyCode::Down => { self.cursor_down(); }
+            KeyCode::Left => { self.tab_left(); }
+            KeyCode::Right => { self.tab_right(); }
+            KeyCode::Enter => { self.enter(); }
+            KeyCode::Esc => { self.exit(); }
+            KeyCode::Backspace => { self.backspace(); }
             _ => return Ok(()),
         };
 
@@ -80,20 +73,50 @@ impl Context {
         }
     }
 
+    fn tab_left(&mut self) {
+        if let State::View { flow_index, index,.. } = &mut self.state { 
+            if *flow_index > 0usize {
+                flow_index.sub_assign(1);
+                index.bitxor_assign(*index);
+            }
+        }
+    }
+
+    fn tab_right(&mut self) {
+        if let State::View { flow_index, flows, index, .. } = &mut self.state { 
+            if *flow_index < (flows.len() - 1) {
+                flow_index.add_assign(1);
+                index.bitxor_assign(*index);
+            }
+        }
+    }
+    
     fn enter(&mut self) {
         match &self.state {
             State::Browse { index, current_directory, current_directory_content } => {
                 let entry = current_directory_content.get(*index).expect("we ensure index is always inside 0..current_directory_content.len(), so this should never throw");
+                let new_path = current_directory.join(entry.file_name());
                 match entry.entry_type() {
                     DirectoryEntryType::Directory => {
-                        let new_path = current_directory.join(entry.file_name());
                         let Ok(content) = DirectoryContent::read(&new_path) else {
                             return;
                         };
 
                         self.state = State::Browse { index: 0, current_directory: new_path, current_directory_content: content }
                     }
-                    DirectoryEntryType::File | DirectoryEntryType::SymbolicLink => {}
+                    DirectoryEntryType::File | DirectoryEntryType::SymbolicLink => {
+                        let Ok(flows) = extract_flows(new_path) else {
+                            return;
+                        };
+
+                        self.state = State::View {
+                            current_directory: current_directory.to_path_buf(),
+                            current_file: entry.display_name(),
+                            index: 0,
+                            flow_index: 0,
+                            flows,
+                        }
+                    }
                 }
             }
             State::View { .. } => {}
@@ -109,14 +132,22 @@ impl Context {
         match &self.state {
             State::Browse { current_directory, .. } => {
                 let new_path = current_directory.parent().unwrap_or(current_directory);
-                let Ok(content) = DirectoryContent::read(new_path).expect("this will throw") else {
+                let Ok(content) = DirectoryContent::read(new_path) else {
                     return;
                 };
 
                 self.state = State::Browse { index: 0, current_directory: new_path.to_path_buf(), current_directory_content: content }
             }
-            State::View { .. } => {}
+            State::View { current_directory, .. } => {
+                self.state = State::Browse { index: 0, current_directory: current_directory.to_path_buf(), current_directory_content: DirectoryContent::read(current_directory).unwrap() }
+            }
             State::Exit => {}
         }
     }
+}
+
+pub enum State {
+    Browse { current_directory: PathBuf, current_directory_content: DirectoryContent, index: usize },
+    View { current_directory: PathBuf, current_file: String, index: usize, flow_index: usize, flows: Flows },
+    Exit,
 }
