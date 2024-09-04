@@ -19,25 +19,37 @@ pub fn extract_flows(file_path: impl AsRef<Path>) -> Result<Flows, Error> {
     let (capture_header, capture) = ReadOnlyCapture::open(file_path)?;
 
     for (packet_header, packet) in capture {
-        let dissection = PacketDissection::from_packet(&packet, capture_header.endianness, capture_header.link_layer_type)?;
+        let dissection = PacketDissection::from_packet(
+            &packet,
+            capture_header.endianness,
+            capture_header.link_layer_type,
+        )?;
 
         let five_tuple = FiveTuple::from_packet_dissection(&dissection);
         match packets.entry(five_tuple) {
-            Entry::Occupied(mut o) => { o.get_mut().push((packet_header, dissection)); }
-            Entry::Vacant(v) => { v.insert(vec![(packet_header, dissection)]); }
+            Entry::Occupied(mut o) => {
+                o.get_mut().push((packet_header, dissection));
+            }
+            Entry::Vacant(v) => {
+                v.insert(vec![(packet_header, dissection)]);
+            }
         }
     }
 
     for (_, flow) in &mut packets {
-        flow.sort_by(|(header, _), (other, _) | header.timestamp.cmp(&other.timestamp))
+        flow.sort_by(|(header, _), (other, _)| header.timestamp.cmp(&other.timestamp))
     }
 
     let mut flows: HashMap<FiveTuple, Flow> = HashMap::new();
     for (five_tuple, vec) in &packets {
         for (header, dissection) in vec {
             match flows.entry(five_tuple.to_owned()) {
-                Entry::Occupied(mut o) => { o.get_mut().insert_packet(dissection, header); }
-                Entry::Vacant(v) => { v.insert(Flow::new(dissection, header)); }
+                Entry::Occupied(mut o) => {
+                    o.get_mut().insert_packet(dissection, header);
+                }
+                Entry::Vacant(v) => {
+                    v.insert(Flow::new(dissection, header));
+                }
             }
         }
 
@@ -48,7 +60,6 @@ pub fn extract_flows(file_path: impl AsRef<Path>) -> Result<Flows, Error> {
         }
     }
 
-
     Ok(Flows { inner: flows })
 }
 
@@ -58,15 +69,29 @@ pub struct Flows {
 
 impl<'a> Flows {
     pub fn iter(&self, index: usize) -> PacketIterator {
-        PacketIterator { packets: self.inner.values().nth(index).expect("we ensure index is within 0..flows.len()").packets.iter(), index: 0 }
+        PacketIterator {
+            packets: self
+                .inner
+                .values()
+                .nth(index)
+                .expect("we ensure index is within 0..flows.len()")
+                .packets
+                .iter(),
+            index: 0,
+        }
     }
 
     pub fn get(&self, index: usize) -> &Flow {
-        self.inner.values().nth(index).expect("we ensure index is within 0..flows.len()")
+        self.inner
+            .values()
+            .nth(index)
+            .expect("we ensure index is within 0..flows.len()")
     }
 
     pub fn keys(&self) -> NameIterator {
-        NameIterator { names: self.inner.keys() }
+        NameIterator {
+            names: self.inner.keys(),
+        }
     }
 
     pub fn len(&self) -> usize {
@@ -100,7 +125,11 @@ impl Flow {
         let size = header.actual_length.as_usize();
         let timestamp = header.timestamp.nanos();
 
-        let flow_packet = FlowPacket { from_initiator_to_respondent: true, timestamp: 0u64, size };
+        let flow_packet = FlowPacket {
+            from_initiator_to_respondent: true,
+            timestamp: 0u64,
+            size,
+        };
 
         Flow {
             initiator,
@@ -138,7 +167,8 @@ impl Flow {
         self.previous_timestamp = timestamp;
 
         let packet = FlowPacket {
-            from_initiator_to_respondent: initiator == self.initiator && respondent == self.respondent,
+            from_initiator_to_respondent: initiator == self.initiator
+                && respondent == self.respondent,
             timestamp,
             size: header.actual_length.as_usize(),
         };
@@ -165,9 +195,19 @@ impl<'a> Iterator for PacketIterator<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         self.index += 1;
         self.packets.next().map(|p| {
-            let direction = if p.from_initiator_to_respondent { "→" } else { "←" }.to_string();
+            let direction = if p.from_initiator_to_respondent {
+                "→"
+            } else {
+                "←"
+            }
+            .to_string();
 
-            Row::new([self.index.to_string(), direction, p.timestamp.to_string(), p.size.to_string()])
+            Row::new([
+                self.index.to_string(),
+                direction,
+                p.timestamp.to_string(),
+                p.size.to_string(),
+            ])
         })
     }
 }

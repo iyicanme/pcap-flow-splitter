@@ -63,8 +63,8 @@ impl Timestamp {
     pub fn nanos(&self) -> u64 {
         u64::from(self.1)
             .mul(match self.0 {
-                TimestampPrecision::Micro => { 1_000_000u64 }
-                TimestampPrecision::Nano => { 1_000_000_000u64 }
+                TimestampPrecision::Micro => 1_000_000u64,
+                TimestampPrecision::Nano => 1_000_000_000u64,
             })
             .add(u64::from(self.2))
     }

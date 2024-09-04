@@ -21,7 +21,9 @@ pub mod table {
         .fg(color::table::ODD.fg())
         .bg(color::table::ODD.bg());
 
-    pub fn header() -> Style { ODD }
+    pub fn header() -> Style {
+        ODD
+    }
 
     pub mod selected {
         use ratatui::prelude::Style;
@@ -51,12 +53,22 @@ pub mod tabs {
 
     use crate::ui::color;
 
-    pub const SELECTED: Style = Style::new().fg(color::tabs::SELECTED.fg()).bg(color::tabs::SELECTED.bg());
-    pub const UNSELECTED: Style = Style::new().fg(color::tabs::UNSELECTED.fg()).bg(color::tabs::UNSELECTED.bg());
+    pub const SELECTED: Style = Style::new()
+        .fg(color::tabs::SELECTED.fg())
+        .bg(color::tabs::SELECTED.bg());
+    pub const UNSELECTED: Style = Style::new()
+        .fg(color::tabs::UNSELECTED.fg())
+        .bg(color::tabs::UNSELECTED.bg());
 }
 
-pub fn file() -> Style { Style::new() }
+pub fn file() -> Style {
+    Style::new()
+}
 
-pub fn directory() -> Style { Style::new().bold() }
+pub fn directory() -> Style {
+    Style::new().bold()
+}
 
-pub fn symbolic_link() -> Style { Style::new().underlined() } 
+pub fn symbolic_link() -> Style {
+    Style::new().underlined()
+}

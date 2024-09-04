@@ -39,20 +39,16 @@ impl PacketDissection {
 
     pub fn socket_addrs(&self) -> Result<(SocketAddr, SocketAddr), AddrParseError> {
         let addrs = match (&self.network_layer, &self.transport_layer) {
-            (NetworkLayer::IPv4(addr_a, addr_b, _), TransportLayer::Tcp(port_a, port_b, _)) |
-            (NetworkLayer::IPv4(addr_a, addr_b, _), TransportLayer::Udp(port_a, port_b, _)) => {
-                (
-                    SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::from(*addr_a), *port_a)),
-                    SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::from(*addr_b), *port_b)),
-                )
-            }
-            (NetworkLayer::IPv6(addr_a, addr_b, _), TransportLayer::Tcp(port_a, port_b, _)) |
-            (NetworkLayer::IPv6(addr_a, addr_b, _), TransportLayer::Udp(port_a, port_b, _)) => {
-                (
-                    SocketAddr::V6(SocketAddrV6::new(Ipv6Addr::from(*addr_a), *port_a, 0, 0)),
-                    SocketAddr::V6(SocketAddrV6::new(Ipv6Addr::from(*addr_b), *port_b, 0, 0)),
-                )
-            }
+            (NetworkLayer::IPv4(addr_a, addr_b, _), TransportLayer::Tcp(port_a, port_b, _))
+            | (NetworkLayer::IPv4(addr_a, addr_b, _), TransportLayer::Udp(port_a, port_b, _)) => (
+                SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::from(*addr_a), *port_a)),
+                SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::from(*addr_b), *port_b)),
+            ),
+            (NetworkLayer::IPv6(addr_a, addr_b, _), TransportLayer::Tcp(port_a, port_b, _))
+            | (NetworkLayer::IPv6(addr_a, addr_b, _), TransportLayer::Udp(port_a, port_b, _)) => (
+                SocketAddr::V6(SocketAddrV6::new(Ipv6Addr::from(*addr_a), *port_a, 0, 0)),
+                SocketAddr::V6(SocketAddrV6::new(Ipv6Addr::from(*addr_b), *port_b, 0, 0)),
+            ),
         };
 
         Ok(addrs)

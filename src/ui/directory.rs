@@ -19,7 +19,11 @@ impl DirectoryContent {
             .map_err(Error::ReadDirContent)?
             .filter_map(Result::ok)
             .filter_map(|e| e.file_type().map(|t| (t, e.file_name())).ok())
-            .filter_map(|(os_file_type, file_name)| DirectoryEntryType::try_from(os_file_type).map(|file_type| (file_type, file_name)).ok())
+            .filter_map(|(os_file_type, file_name)| {
+                DirectoryEntryType::try_from(os_file_type)
+                    .map(|file_type| (file_type, file_name))
+                    .ok()
+            })
             .map(DirectoryEntry::from)
             .collect::<Vec<_>>();
 
@@ -29,7 +33,10 @@ impl DirectoryContent {
     }
 
     pub fn iter(&self) -> DirectoryContentIterator {
-        DirectoryContentIterator { inner: self, index: 0 }
+        DirectoryContentIterator {
+            inner: self,
+            index: 0,
+        }
     }
 
     pub fn len(&self) -> usize {
@@ -85,12 +92,17 @@ impl DirectoryEntry {
         self.file_name.clone()
     }
 
-    pub fn display_name(&self) -> String { self.display_name.clone() }
+    pub fn display_name(&self) -> String {
+        self.display_name.clone()
+    }
 }
 
 impl PartialOrd for DirectoryEntry {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        let ordering = match (self.entry_type.cmp(&other.entry_type), self.sort_name.cmp(&other.sort_name)) {
+        let ordering = match (
+            self.entry_type.cmp(&other.entry_type),
+            self.sort_name.cmp(&other.sort_name),
+        ) {
             (Ordering::Greater, _) => Ordering::Less,
             (Ordering::Equal, ordering) => ordering,
             (Ordering::Less, _) => Ordering::Greater,
@@ -110,10 +122,14 @@ impl From<(DirectoryEntryType, OsString)> for DirectoryEntry {
     fn from(value: (DirectoryEntryType, OsString)) -> Self {
         let sort_name = value.1.to_ascii_lowercase();
         let display_name = value.1.to_string_lossy().to_string();
-        Self { entry_type: value.0, file_name: value.1, sort_name, display_name }
+        Self {
+            entry_type: value.0,
+            file_name: value.1,
+            sort_name,
+            display_name,
+        }
     }
 }
-
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd, Debug)]
 pub enum DirectoryEntryType {
@@ -140,7 +156,7 @@ impl TryFrom<FileType> for DirectoryEntryType {
             (true, false, false) => Self::File,
             (false, true, false) => Self::Directory,
             (false, false, true) => Self::SymbolicLink,
-            _ => return Err(Error::FileTypeConversion)
+            _ => return Err(Error::FileTypeConversion),
         };
 
         Ok(file_type)
