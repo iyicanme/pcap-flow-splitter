@@ -48,7 +48,7 @@ fn oneshot(file_path: OsString) -> Result<(), Error> {
             out_capture.put(packet_header, &packet)?;
         } else {
             let mut out_capture =
-                WriteOnlyCapture::create(five_tuple.as_base64() + ".pcap", capture_header)?;
+                WriteOnlyCapture::create(five_tuple.to_string() + ".pcap", capture_header)?;
             out_capture.put(packet_header, &packet)?;
 
             out_files.insert(five_tuple, out_capture);

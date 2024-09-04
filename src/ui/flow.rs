@@ -176,6 +176,6 @@ impl<'a> Iterator for NameIterator<'a> {
     type Item = String;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.names.next().map(|ft| ft.as_base64())
+        self.names.next().map(|ft| ft.to_string())
     }
 }

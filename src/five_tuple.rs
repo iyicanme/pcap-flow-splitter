@@ -1,93 +1,60 @@
-use base64::prelude::BASE64_STANDARD;
-use base64::Engine;
+use std::fmt::{Display, Formatter};
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
 use crate::packet_dissection::{NetworkLayer, PacketDissection, TransportLayer};
 
 #[derive(Eq, PartialEq, Hash, Clone)]
 pub struct FiveTuple {
-    inner: Vec<u8>,
+    lower_addr: IpAddr,
+    lower_port: u16,
+    higher_addr: IpAddr,
+    higher_port: u16,
+    is_tcp: bool
 }
 
 impl FiveTuple {
     pub fn from_packet_dissection(dissection: &PacketDissection) -> Self {
-        let (mut address, is_source_lower, mut is_v6) = match dissection.network_layer {
+        let (is_source_lower, lower_addr, higher_addr) = match dissection.network_layer {
             NetworkLayer::IPv4(source, destination, _) => {
-                let is_source_lower = source < destination;
-
-                let mut source_buffer: Vec<u8> = source.to_ne_bytes().to_vec();
-                source_buffer.append(&mut vec![0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
-                let mut destination_buffer: Vec<u8> = destination.to_ne_bytes().to_vec();
-                destination_buffer.append(&mut vec![0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
-
-                let address = if is_source_lower {
-                    source_buffer.append(&mut destination_buffer);
-                    source_buffer
+                let (lower_addr, higher_addr) = if source < destination {
+                    (IpAddr::V4(Ipv4Addr::from(source)), IpAddr::V4(Ipv4Addr::from(destination)))
                 } else {
-                    destination_buffer.append(&mut source_buffer);
-                    destination_buffer
+                    (IpAddr::V4(Ipv4Addr::from(destination)), IpAddr::V4(Ipv4Addr::from(source)))
                 };
 
-                (address, is_source_lower, vec![0])
+                (source < destination, lower_addr, higher_addr)
             }
             NetworkLayer::IPv6(source, destination, _) => {
-                let is_source_lower = source < destination;
-
-                let mut source_buffer: Vec<u8> = source.to_ne_bytes().to_vec();
-                let mut destination_buffer: Vec<u8> = destination.to_ne_bytes().to_vec();
-
-                let address = if is_source_lower {
-                    source_buffer.append(&mut destination_buffer);
-                    source_buffer
+                let (lower_addr, higher_addr) = if source < destination {
+                    (IpAddr::V6(Ipv6Addr::from(source)), IpAddr::V6(Ipv6Addr::from(destination)))
                 } else {
-                    destination_buffer.append(&mut source_buffer);
-                    destination_buffer
+                    (IpAddr::V6(Ipv6Addr::from(destination)), IpAddr::V6(Ipv6Addr::from(source)))
                 };
 
-                (address, is_source_lower, vec![1])
+                (source < destination, lower_addr, higher_addr)
             }
         };
 
-        let (mut port, mut is_tcp) = match dissection.transport_layer {
-            TransportLayer::Udp(source, destination, _) => {
-                let mut source_buffer: Vec<u8> = source.to_ne_bytes().to_vec();
-                let mut destination_buffer: Vec<u8> = destination.to_ne_bytes().to_vec();
-
-                let port = if is_source_lower {
-                    source_buffer.append(&mut destination_buffer);
-                    source_buffer
-                } else {
-                    destination_buffer.append(&mut source_buffer);
-                    destination_buffer
-                };
-
-                (port, vec![0])
-            }
-            TransportLayer::Tcp(source, destination, _) => {
-                let mut source_buffer: Vec<u8> = source.to_ne_bytes().to_vec();
-                let mut destination_buffer: Vec<u8> = destination.to_ne_bytes().to_vec();
-
-                let port = if is_source_lower {
-                    source_buffer.append(&mut destination_buffer);
-                    source_buffer
-                } else {
-                    destination_buffer.append(&mut source_buffer);
-                    destination_buffer
-                };
-
-                (port, vec![1])
-            }
+        let (is_tcp, lower_port, higher_port) = match (is_source_lower, &dissection.transport_layer) {
+            (true, TransportLayer::Udp(source, destination, _)) => (false, source, destination),
+            (false, TransportLayer::Udp(source, destination, _)) => (false, destination, source),
+            (true, TransportLayer::Tcp(source, destination, _)) => (true, source, destination),
+            (false, TransportLayer::Tcp(source, destination, _)) => (true, destination, source),
         };
 
-        let mut five_tuple: Vec<u8> = Vec::new();
-        five_tuple.append(&mut address);
-        five_tuple.append(&mut port);
-        five_tuple.append(&mut is_v6);
-        five_tuple.append(&mut is_tcp);
-
-        Self { inner: five_tuple }
+        FiveTuple {
+            lower_addr,
+            lower_port: *lower_port,
+            higher_addr,
+            higher_port: *higher_port,
+            is_tcp,
+        }
     }
+}
 
-    pub fn as_base64(&self) -> String {
-        BASE64_STANDARD.encode(&self.inner)
+impl Display for FiveTuple {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let protocol = if self.is_tcp { "TCP" } else { "UDP" };
+        write!(f, "[{protocol}] {}:{} ↔ {}:{}", self.lower_addr, self.lower_port, self.higher_addr, self.higher_port)
     }
 }
