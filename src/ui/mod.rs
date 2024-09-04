@@ -19,6 +19,7 @@ mod style;
 mod table;
 mod flow;
 mod tabs;
+mod infobox;
 
 pub fn run() -> Result<(), Error> {
     let mut context = Context::new()?;
@@ -91,12 +92,13 @@ fn draw_body(frame: &mut Frame, context: &mut Context, table_area: Rect) {
             }
         State::View { index, flow_index, flows, .. } => {
             context.table_state.select(Some(*index));
-            
-            let constraints = [Constraint::Length(1), Constraint::Min(0)];
+
+            let constraints = [Constraint::Length(1), Constraint::Min(0), Constraint::Length(6)];
             let areas = Layout::new(Direction::Vertical, constraints).split(table_area);
-            
+
             tabs::draw(frame, areas[0], *flow_index, flows.keys());
-            table::draw(frame, areas[1], [Constraint::Length(4), Constraint::Length(10), Constraint::Min(1), Constraint::Min(1)].into_iter(), ["#", "DIRECTION", "TIMESTAMP", "LENGTH"].into_iter(), flows.iter(*flow_index), *index, &mut context.table_state);
+            table::draw(frame, areas[1], [Constraint::Length(4), Constraint::Min(1), Constraint::Min(1), Constraint::Min(1)].into_iter(), ["#", "DIRECTION", "TIMESTAMP", "LENGTH"].into_iter(), flows.iter(*flow_index), *index, &mut context.table_state);
+            infobox::draw(frame, areas[2], flows.get(*flow_index))
         }
         State::Exit => {}
     }

@@ -61,6 +61,10 @@ impl<'a> Flows {
         PacketIterator { packets: self.inner.values().nth(index).expect("we ensure index is within 0..flows.len()").packets.iter(), index: 0 }
     }
 
+    pub fn get(&self, index: usize) -> &Flow {
+        self.inner.values().nth(index).expect("we ensure index is within 0..flows.len()")
+    }
+
     pub fn keys(&self) -> NameIterator {
         NameIterator { names: self.inner.keys() }
     }
@@ -71,18 +75,18 @@ impl<'a> Flows {
 }
 
 pub struct Flow {
-    initiator: SocketAddr,
-    respondent: SocketAddr,
-    protocol: TransportLayerType,
-    packet_count: usize,
-    total_size: usize,
-    average_size: usize,
-    minimum_size: usize,
-    maximum_size: usize,
-    flow_duration: u64,
-    average_interarrival_time: u64,
-    minimum_interarrival_time: u64,
-    maximum_interarrival_time: u64,
+    pub initiator: SocketAddr,
+    pub respondent: SocketAddr,
+    pub protocol: TransportLayerType,
+    pub packet_count: usize,
+    pub total_size: usize,
+    pub average_size: usize,
+    pub minimum_size: usize,
+    pub maximum_size: usize,
+    pub flow_duration: u64,
+    pub average_interarrival_time: u64,
+    pub minimum_interarrival_time: u64,
+    pub maximum_interarrival_time: u64,
     packets: Vec<FlowPacket>,
     flow_start: u64,
     previous_timestamp: u64,
