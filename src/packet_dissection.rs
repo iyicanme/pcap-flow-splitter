@@ -39,13 +39,17 @@ impl PacketDissection {
 
     pub fn socket_addrs(&self) -> Result<(SocketAddr, SocketAddr), AddrParseError> {
         let addrs = match (&self.network_layer, &self.transport_layer) {
-            (NetworkLayer::IPv4(addr_a, addr_b, _), TransportLayer::Tcp(port_a, port_b, _))
-            | (NetworkLayer::IPv4(addr_a, addr_b, _), TransportLayer::Udp(port_a, port_b, _)) => (
+            (
+                NetworkLayer::IPv4(addr_a, addr_b, _),
+                TransportLayer::Tcp(port_a, port_b, _) | TransportLayer::Udp(port_a, port_b, _),
+            ) => (
                 SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::from(*addr_a), *port_a)),
                 SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::from(*addr_b), *port_b)),
             ),
-            (NetworkLayer::IPv6(addr_a, addr_b, _), TransportLayer::Tcp(port_a, port_b, _))
-            | (NetworkLayer::IPv6(addr_a, addr_b, _), TransportLayer::Udp(port_a, port_b, _)) => (
+            (
+                NetworkLayer::IPv6(addr_a, addr_b, _),
+                TransportLayer::Tcp(port_a, port_b, _) | TransportLayer::Udp(port_a, port_b, _),
+            ) => (
                 SocketAddr::V6(SocketAddrV6::new(Ipv6Addr::from(*addr_a), *port_a, 0, 0)),
                 SocketAddr::V6(SocketAddrV6::new(Ipv6Addr::from(*addr_b), *port_b, 0, 0)),
             ),
@@ -110,8 +114,8 @@ impl NetworkLayer {
 
                 cursor.advance(8);
                 let protocol = match cursor.get_u8() {
-                    6 => TransportLayerType::TCP,
-                    17 => TransportLayerType::UDP,
+                    6 => TransportLayerType::Tcp,
+                    17 => TransportLayerType::Udp,
                     transport_layer_type => {
                         return Err(Error::UnknownTransportLayerType(transport_layer_type))
                     }
@@ -161,8 +165,8 @@ impl NetworkLayer {
                 }
 
                 let protocol = match next_header {
-                    6 => TransportLayerType::TCP,
-                    17 => TransportLayerType::UDP,
+                    6 => TransportLayerType::Tcp,
+                    17 => TransportLayerType::Udp,
                     transport_layer_type => {
                         return Err(Error::UnknownTransportLayerType(transport_layer_type))
                     }
@@ -194,7 +198,7 @@ impl TransportLayer {
         transport_layer_type: TransportLayerType,
     ) -> Result<Self, Error> {
         let layer = match transport_layer_type {
-            TransportLayerType::TCP => {
+            TransportLayerType::Tcp => {
                 let source = cursor.get_u16();
                 let destination = cursor.get_u16();
 
@@ -205,7 +209,7 @@ impl TransportLayer {
 
                 Self::Tcp(source, destination, ApplicationLayerType::OctetArray)
             }
-            TransportLayerType::UDP => {
+            TransportLayerType::Udp => {
                 let source = cursor.get_u16();
                 let destination = cursor.get_u16();
 

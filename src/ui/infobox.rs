@@ -83,10 +83,10 @@ pub fn draw(frame: &mut Frame, area: Rect, data: &Flow) {
     );
 }
 
-pub fn draw_paragraph<'a>(buffer: &mut Buffer, area: Rect, text: &[String]) {
+pub fn draw_paragraph(buffer: &mut Buffer, area: Rect, text: &[String]) {
     let lines = text
         .iter()
-        .map(|s| s.as_str())
+        .map(String::as_str)
         .map(Line::from)
         .collect::<Vec<Line>>();
     Paragraph::new(lines).render(area, buffer);

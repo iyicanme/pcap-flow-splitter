@@ -38,8 +38,8 @@ impl Display for NetworkLayerType {
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum TransportLayerType {
-    TCP,
-    UDP,
+    Tcp,
+    Udp,
 }
 
 impl Display for TransportLayerType {
@@ -48,8 +48,8 @@ impl Display for TransportLayerType {
             f,
             "{}",
             match self {
-                Self::UDP => "UDP",
-                Self::TCP => "TCP",
+                Self::Udp => "UDP",
+                Self::Tcp => "TCP",
             }
         )
     }

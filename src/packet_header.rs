@@ -84,7 +84,7 @@ impl Display for Timestamp {
 pub struct PacketLength(pub u32);
 
 impl PacketLength {
-    pub fn as_usize(&self) -> usize {
+    pub const fn as_usize(self) -> usize {
         self.0 as usize
     }
 }

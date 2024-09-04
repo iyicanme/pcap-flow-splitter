@@ -29,7 +29,7 @@ impl Context {
         })
     }
 
-    pub fn should_exit(&self) -> bool {
+    pub const fn should_exit(&self) -> bool {
         matches!(self.state, State::Exit)
     }
 
@@ -76,11 +76,10 @@ impl Context {
 
     fn cursor_up(&mut self) {
         match &mut self.state {
-            State::Browse { index: 0, .. } | State::View { index: 0, .. } => {}
+            State::Browse { index: 0, .. } | State::View { index: 0, .. } | State::Exit => {}
             State::Browse { index, .. } | State::View { index, .. } => {
                 index.sub_assign(1);
             }
-            State::Exit => {}
         }
     }
 
@@ -156,7 +155,7 @@ impl Context {
                         };
 
                         self.state = State::View {
-                            current_directory: current_directory.to_path_buf(),
+                            current_directory: current_directory.clone(),
                             current_file: entry.display_name(),
                             index: 0,
                             flow_index: 0,
@@ -165,13 +164,12 @@ impl Context {
                     }
                 }
             }
-            State::View { .. } => {}
-            State::Exit => {}
+            State::View { .. } | State::Exit => {}
         }
     }
 
     fn exit(&mut self) {
-        self.state = State::Exit
+        self.state = State::Exit;
     }
 
     fn backspace(&mut self) {
@@ -195,7 +193,7 @@ impl Context {
             } => {
                 self.state = State::Browse {
                     index: 0,
-                    current_directory: current_directory.to_path_buf(),
+                    current_directory: current_directory.clone(),
                     current_directory_content: DirectoryContent::read(current_directory).unwrap(),
                 }
             }

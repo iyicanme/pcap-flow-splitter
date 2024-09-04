@@ -32,7 +32,7 @@ impl DirectoryContent {
         Ok(Self { content })
     }
 
-    pub fn iter(&self) -> DirectoryContentIterator {
+    pub const fn iter(&self) -> DirectoryContentIterator {
         DirectoryContentIterator {
             inner: self,
             index: 0,
@@ -41,10 +41,6 @@ impl DirectoryContent {
 
     pub fn len(&self) -> usize {
         self.content.len()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.len() == 0
     }
 
     pub fn get(&self, i: usize) -> Option<&DirectoryEntry> {
@@ -84,7 +80,7 @@ pub struct DirectoryEntry {
 }
 
 impl DirectoryEntry {
-    pub fn entry_type(&self) -> DirectoryEntryType {
+    pub const fn entry_type(&self) -> DirectoryEntryType {
         self.entry_type
     }
 
@@ -141,9 +137,9 @@ pub enum DirectoryEntryType {
 impl DirectoryEntryType {
     fn style(self) -> Style {
         match self {
-            DirectoryEntryType::File => style::file(),
-            DirectoryEntryType::Directory => style::directory(),
-            DirectoryEntryType::SymbolicLink => style::symbolic_link(),
+            Self::File => style::file(),
+            Self::Directory => style::directory(),
+            Self::SymbolicLink => style::symbolic_link(),
         }
     }
 }

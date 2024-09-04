@@ -134,7 +134,7 @@ fn draw_body(frame: &mut Frame, context: &mut Context, table_area: Rect) {
                 *index,
                 &mut context.table_state,
             );
-            infobox::draw(frame, areas[2], flows.get(*flow_index))
+            infobox::draw(frame, areas[2], flows.get(*flow_index));
         }
         State::Exit => {}
     }
@@ -151,7 +151,7 @@ fn draw_footer(frame: &mut Frame, state: &State, area: Rect) {
 
     let header = Block::new()
         .title(instructions)
-        .style(style::HEADER)
+        .style(style::FOOTER)
         .borders(Borders::TOP);
 
     frame.render_widget(header, area);

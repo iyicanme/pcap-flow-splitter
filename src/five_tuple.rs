@@ -55,7 +55,7 @@ impl FiveTuple {
             (false, TransportLayer::Tcp(source, destination, _)) => (true, destination, source),
         };
 
-        FiveTuple {
+        Self {
             lower_addr,
             lower_port: *lower_port,
             higher_addr,

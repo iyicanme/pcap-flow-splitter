@@ -1,5 +1,5 @@
 use ratatui::layout::{Constraint, Rect};
-use ratatui::prelude::{Style, Text};
+use ratatui::text::Text;
 use ratatui::widgets::{Cell, HighlightSpacing, Row, Table, TableState};
 use ratatui::Frame;
 

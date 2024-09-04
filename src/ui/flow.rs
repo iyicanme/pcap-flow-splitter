@@ -36,8 +36,8 @@ pub fn extract_flows(file_path: impl AsRef<Path>) -> Result<Flows, Error> {
         }
     }
 
-    for (_, flow) in &mut packets {
-        flow.sort_by(|(header, _), (other, _)| header.timestamp.cmp(&other.timestamp))
+    for p in packets.values_mut() {
+        p.sort_by(|(header, _), (other, _)| header.timestamp.cmp(&other.timestamp));
     }
 
     let mut flows: HashMap<FiveTuple, Flow> = HashMap::new();
@@ -67,7 +67,7 @@ pub struct Flows {
     inner: HashMap<FiveTuple, Flow>,
 }
 
-impl<'a> Flows {
+impl Flows {
     pub fn iter(&self, index: usize) -> PacketIterator {
         PacketIterator {
             packets: self
@@ -131,7 +131,7 @@ impl Flow {
             size,
         };
 
-        Flow {
+        Self {
             initiator,
             respondent,
             protocol,
@@ -220,6 +220,6 @@ impl<'a> Iterator for NameIterator<'a> {
     type Item = String;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.names.next().map(|ft| ft.to_string())
+        self.names.next().map(FiveTuple::to_string)
     }
 }

@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use std::ffi::OsString;
-use std::path::Path;
 
 use clap::Parser;
 
@@ -8,7 +7,6 @@ use crate::error::Error;
 use capture::{ReadOnlyCapture, WriteOnlyCapture};
 
 use crate::five_tuple::FiveTuple;
-use crate::packet::Packet;
 use crate::packet_dissection::PacketDissection;
 
 mod capture;

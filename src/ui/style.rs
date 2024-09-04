@@ -10,7 +10,6 @@ pub const TABLE: Style = Style::new().fg(color::TABLE.fg()).bg(color::TABLE.bg()
 
 pub mod table {
     use ratatui::prelude::Style;
-    use ratatui::style::Stylize;
 
     use crate::ui::style::color;
 
@@ -21,7 +20,7 @@ pub mod table {
         .fg(color::table::ODD.fg())
         .bg(color::table::ODD.bg());
 
-    pub fn header() -> Style {
+    pub const fn header() -> Style {
         ODD
     }
 
@@ -61,7 +60,7 @@ pub mod tabs {
         .bg(color::tabs::UNSELECTED.bg());
 }
 
-pub fn file() -> Style {
+pub const fn file() -> Style {
     Style::new()
 }
 
