@@ -13,14 +13,14 @@ It will launch a TUI that can browse the filesystem to open capture files.
 ```shell
 $ ./pcap_flow_splitter
 
- /home/iyicanme/Desktop ───────────────────────────────────
+ /home/iyicanme/Desktop ──────────────────────────────────────────────────────────────────────
    NAME
    love_letters_to_ferris
    packet_captures
    http.ccap
    dns.pcap
    radius.pcapng
-   [↑] UP [↓] DOWN [ESC] EXIT [↵] OPEN [BACKSP] GO UP ─────
+   [↑] UP [↓] DOWN [ESC] EXIT [↵] OPEN [BACKSP] GO UP ────────────────────────────────────────
 ```
 
 Program can be navigated using the controls on the screen.
@@ -28,26 +28,26 @@ Program can be navigated using the controls on the screen.
 Selecting a file switches to flow viewer.
 
 ```shell
- http.cap ────────────────────────────────────────────────────────────────────────────────────────────
-[UDP] 203...:13568 ↔ 237...:49419 [TCP] 223...:20480 ↔ 237...:11277 [TCP] 99...:20480 ↔ 237...:11021
-   #    DIRECTION                                 TIMESTAMP                                     LENGTH
-   1    →                                         0.000000000                                   62
-   2    ←                                         0.000911310                                   62
-   3    →                                         0.000911310                                   54
-   4    →                                         0.000911310                                   533
-   5    ←                                         0.001472116                                   54
-   6    ←                                         0.001682419                                   1434
-   7    →                                         0.001812606                                   54
-   8    ←                                         0.001812606                                   1434
-   9    →                                         0.002012894                                   54
-   10   ←                                         0.002443513                                   1434
-┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│Initiator:    237...:11277      Total size:   20695          Flow duration:              0.030393704│
-│Respondent:   223...:20480      Average size: 608            Average inter-arrival time: 0.000921021│
-│Protocol:     TCP               Minimum size: 54             Minimum inter-arrival time: 0.000000000│
-│Packet count: 34                Maximum size: 1434           Maximum inter-arrival time: 0.012888533│
-└────────────────────────────────────────────────────────────────────────────────────────────────────┘
- [↑] UP [↓] DOWN [←] PREVIOUS [→] NEXT [ESC] EXIT [BACKSP] CLOSE FILE ────────────────────────────────
+ http.cap ────────────────────────────────────────────────────────────────────────────────────
+[UDP] 203...:135 ↔ 237...:419 [TCP] 223...:200 ↔ 237...:177 [TCP] 99...:200 ↔ 237...:121
+   #    DIRECTION                             TIMESTAMP                                 LENGTH
+   1    →                                     0.000000000                               62
+   2    ←                                     0.000911310                               62
+   3    →                                     0.000911310                               54
+   4    →                                     0.000911310                               533
+   5    ←                                     0.001472116                               54
+   6    ←                                     0.001682419                               1434
+   7    →                                     0.001812606                               54
+   8    ←                                     0.001812606                               1434
+   9    →                                     0.002012894                               54
+   10   ←                                     0.002443513                               1434
+┌────────────────────────────────────────────────────────────────────────────────────────────┐
+│Initiator:    237...:11277    Total size:   20695    Flow duration:              0.030393704│
+│Respondent:   223...:20480    Average size: 608      Average inter-arrival time: 0.000921021│
+│Protocol:     TCP             Minimum size: 54       Minimum inter-arrival time: 0.000000000│
+│Packet count: 34              Maximum size: 1434     Maximum inter-arrival time: 0.012888533│
+└────────────────────────────────────────────────────────────────────────────────────────────┘
+ [↑] UP [↓] DOWN [←] PREVIOUS [→] NEXT [ESC] EXIT [BACKSP] CLOSE FILE ────────────────────────
 ```
 
 Flow viewer displays the list packets of each flow and some statistics of the flow.
