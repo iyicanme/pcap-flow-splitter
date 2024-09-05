@@ -12,6 +12,7 @@ use crate::five_tuple::FiveTuple;
 use crate::packet_dissection::PacketDissection;
 use crate::packet_header::PacketHeader;
 use crate::packet_layer::TransportLayerType;
+use crate::ui::timestamp_display::TimestampDisplay;
 
 pub fn extract_flows(file_path: impl AsRef<Path>) -> Result<Flows, Error> {
     let mut packets: HashMap<FiveTuple, Vec<(PacketHeader, PacketDissection)>> = HashMap::new();
@@ -205,7 +206,7 @@ impl<'a> Iterator for PacketIterator<'a> {
             Row::new([
                 self.index.to_string(),
                 direction,
-                p.timestamp.to_string(),
+                TimestampDisplay(p.timestamp).to_string(),
                 p.size.to_string(),
             ])
         })

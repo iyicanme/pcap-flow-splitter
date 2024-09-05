@@ -1,13 +1,13 @@
 use std::borrow::Cow;
 use std::ffi::OsString;
 
+use crossterm::ExecutableCommand;
 use crossterm::terminal::{
     disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
 };
-use crossterm::ExecutableCommand;
 use ratatui::prelude::*;
-use ratatui::widgets::{Block, Borders};
 use ratatui::Terminal;
+use ratatui::widgets::{Block, Borders};
 
 use crate::error::Error;
 use crate::ui::context::{Context, State};
@@ -21,6 +21,7 @@ mod infobox;
 mod style;
 mod table;
 mod tabs;
+mod timestamp_display;
 
 pub fn run(path: Option<OsString>) -> Result<(), Error> {
     let mut context = match path {

@@ -1,12 +1,13 @@
 use ratatui::buffer::Buffer;
+use ratatui::Frame;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::style::Stylize;
 use ratatui::text::Line;
 use ratatui::widgets::{Block, Paragraph, Widget};
-use ratatui::Frame;
 
 use crate::ui::color;
 use crate::ui::flow::Flow;
+use crate::ui::timestamp_display::TimestampDisplay;
 
 pub fn draw(frame: &mut Frame, area: Rect, data: &Flow) {
     let buffer = frame.buffer_mut();
@@ -75,10 +76,10 @@ pub fn draw(frame: &mut Frame, area: Rect, data: &Flow) {
         buffer,
         areas[5],
         &[
-            data.flow_duration.to_string(),
-            data.average_interarrival_time.to_string(),
-            data.minimum_interarrival_time.to_string(),
-            data.maximum_interarrival_time.to_string(),
+            TimestampDisplay(data.flow_duration).to_string(),
+            TimestampDisplay(data.average_interarrival_time).to_string(),
+            TimestampDisplay(data.minimum_interarrival_time).to_string(),
+            TimestampDisplay(data.maximum_interarrival_time).to_string(),
         ],
     );
 }
