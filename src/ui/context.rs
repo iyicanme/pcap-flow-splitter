@@ -1,5 +1,6 @@
+use std::ffi::OsString;
 use std::ops::{AddAssign, BitXorAssign, SubAssign};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use crossterm::event;
 use crossterm::event::{Event, KeyCode};
@@ -24,6 +25,23 @@ impl Context {
                 current_directory,
                 current_directory_content,
                 index: 0,
+            },
+            table_state: TableState::default(),
+        })
+    }
+
+    pub fn new_view(path: OsString) -> Result<Self, Error> {
+        let current_directory = std::env::current_dir().map_err(Error::ReadEnv)?;
+        let file_name = Path::new(&path).file_name().ok_or(Error::NoFileNameInPath)?.to_string_lossy().to_string();
+        let flows = extract_flows(path)?;
+
+        Ok(Self {
+            state: State::View {
+                current_directory,
+                current_file: file_name,
+                index: 0,
+                flow_index: 0,
+                flows,
             },
             table_state: TableState::default(),
         })

@@ -19,6 +19,7 @@ pub enum Error {
     ReadDirContent(IoError),
     TuiReadInput(IoError),
     FileTypeConversion,
+    NoFileNameInPath,
 }
 
 impl Display for Error {

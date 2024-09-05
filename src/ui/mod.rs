@@ -1,4 +1,5 @@
 use std::borrow::Cow;
+use std::ffi::OsString;
 
 use crossterm::terminal::{
     disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
@@ -21,8 +22,11 @@ mod style;
 mod table;
 mod tabs;
 
-pub fn run() -> Result<(), Error> {
-    let mut context = Context::new()?;
+pub fn run(path: Option<OsString>) -> Result<(), Error> {
+    let mut context = match path {
+        None => Context::new(),
+        Some(p) => Context::new_view(p)
+    }?;
 
     enable_raw_mode().map_err(Error::TuiSetup)?;
     std::io::stdout()
